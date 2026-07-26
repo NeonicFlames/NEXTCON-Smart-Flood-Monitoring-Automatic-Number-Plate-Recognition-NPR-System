@@ -26,10 +26,9 @@ Dashboard
 
 
 
-<div className="text-gray-400">
-
-🟢 System Online
-
+<div className="flex items-center gap-2 text-gray-400">
+  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+  <span>System Online</span>
 </div>
 
 

@@ -1,4 +1,5 @@
 import WaterChart from "@/components/WaterChart";
+import { Camera } from "lucide-react";
 
 export default function Home() {
   return (
@@ -16,7 +17,9 @@ export default function Home() {
       <section className="grid lg:grid-cols-5 gap-5 mt-8">
         <div className="bg-[#111827] p-6 rounded-xl shadow border border-gray-800">
           <h2 className="text-gray-400">System Status</h2>
-          <p className="text-2xl font-bold text-green-400 mt-3">🟢 Online</p>
+          <p className="text-2xl font-bold text-green-400 mt-3 flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" /> Online
+          </p>
         </div>
 
         <div className="bg-[#111827] p-6 rounded-xl shadow border border-gray-800">
@@ -75,7 +78,10 @@ export default function Home() {
         </section>
 
         <section className="bg-[#111827] p-6 rounded-xl shadow border border-gray-800">
-          <h2 className="text-xl font-bold mb-5">📷 Camera Monitoring</h2>
+          <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-blue-400" />
+            <span>Camera Monitoring</span>
+          </h2>
           <div className="h-64 bg-black rounded-xl flex items-center justify-center border border-gray-800">
             <p className="text-gray-500 font-medium">Live Camera Feed Waiting...</p>
           </div>

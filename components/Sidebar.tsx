@@ -25,7 +25,7 @@ export default function Sidebar() {
     <aside className="w-64 min-h-screen bg-[#111827] border-r border-gray-800 p-6 flex flex-col justify-between">
       <div>
         <h1 className="text-xl font-bold text-blue-400 mb-10 flex items-center gap-2">
-          <span>🌊</span> Smart Flood NPR
+          <Waves className="w-6 h-6" /> Smart Flood NPR
         </h1>
 
         <nav className="space-y-3">
