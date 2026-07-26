@@ -1,4 +1,4 @@
-# 🌊 NEXTCON - Smart Flood Monitoring & Automatic Number Plate Recognition (NPR) System
+# NEXTCON - Smart Flood Monitoring & Automatic Number Plate Recognition (NPR) System
 
 > **A Next-Generation Real-Time Environmental Surveillance & Vehicle Tracking Dashboard**
 
@@ -10,24 +10,24 @@
 
 ---
 
-## 📌 Project Overview
+## Project Overview
 
 **NEXTCON** is an integrated smart city dashboard designed for **real-time flood level monitoring** paired with **Automatic Number Plate Recognition (NPR / ANPR)**. By combining sensor analytics, camera telemetry, and vehicle surveillance, the system enables municipality operators, emergency response teams, and traffic management units to act swiftly during flood hazards while maintaining vehicle logs in sensitive zones.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- 🌊 **Real-Time Flood & Water Level Analytics**: Live telemetry tracking with dynamic time-series charts powered by Recharts, featuring safety status threshold indicators (`SAFE`, `WARNING`, `DANGER`).
-- 🚗 **Automatic Number Plate Recognition (ANPR/NPR)**: Real-time license plate detection log showing detection timestamps, OCR confidence percentages, and vehicle search/filtering.
-- 📹 **Live Surveillance Stream Feeds**: Embedded camera monitoring interfaces for real-time visual inspection of flood zones and road junctions.
-- 🚨 **Smart Emergency Alerts**: Multi-level alert dispatch system notifying operators of rapid water level rises or flagged license plate sightings.
-- ⚙️ **Customizable System Settings**: Centralized configuration management for sensor water depth thresholds, camera IP streams, and notification preferences.
-- 🌙 **Sleek Dark Theme UI**: Tailored visual design built with Next.js 16 App Router, Tailwind CSS v4, and Lucide React icons.
+- **Real-Time Flood & Water Level Analytics**: Live telemetry tracking with dynamic time-series charts powered by Recharts, featuring safety status threshold indicators (`SAFE`, `WARNING`, `DANGER`).
+- **Automatic Number Plate Recognition (ANPR/NPR)**: Real-time license plate detection log showing detection timestamps, OCR confidence percentages, and vehicle search/filtering.
+- **Live Surveillance Stream Feeds**: Embedded camera monitoring interfaces for real-time visual inspection of flood zones and road junctions.
+- **Smart Emergency Alerts**: Multi-level alert dispatch system notifying operators of rapid water level rises or flagged license plate sightings.
+- **Customizable System Settings**: Centralized configuration management for sensor water depth thresholds, camera IP streams, and notification preferences.
+- **Sleek Dark Theme UI**: Tailored visual design built with Next.js 16 App Router, Tailwind CSS v4, and Lucide React icons.
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 flood-npr-system/
@@ -54,7 +54,7 @@ flood-npr-system/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 
@@ -85,7 +85,7 @@ Ensure you have the following installed on your machine:
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## Tech Stack & Dependencies
 
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Library**: [React 19](https://react.dev/)
@@ -96,7 +96,7 @@ Ensure you have the following installed on your machine:
 
 ---
 
-## ⚙️ Available npm Scripts
+## Available npm Scripts
 
 | Command | Description |
 | :--- | :--- |
@@ -107,6 +107,6 @@ Ensure you have the following installed on your machine:
 
 ---
 
-## 📄 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
