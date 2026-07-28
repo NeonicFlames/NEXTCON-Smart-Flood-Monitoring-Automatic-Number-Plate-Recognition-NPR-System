@@ -2,12 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  CartesianGrid
 } from "recharts";
 
 const emptySubscribe = () => () => { };
@@ -33,8 +34,14 @@ export default function WaterChart() {
 
   if (!isClient) {
     return (
-      <div className="h-64 bg-[#111827] rounded-xl flex items-center justify-center text-gray-500">
-        Loading chart data...
+      <div
+        className="h-64 rounded-lg flex items-center justify-center text-sm"
+        style={{
+          background: "var(--color-paper-3)",
+          color: "var(--color-muted)",
+        }}
+      >
+        Loading chart data…
       </div>
     );
   }
@@ -42,25 +49,53 @@ export default function WaterChart() {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <XAxis dataKey="time" stroke="#9ca3af" />
-          <YAxis stroke="#9ca3af" />
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="oklch(65% 0.20 250)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="oklch(65% 0.20 250)" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="oklch(28% 0.010 250)"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="time"
+            stroke="oklch(68% 0.008 250)"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            stroke="oklch(68% 0.008 250)"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            unit=" cm"
+          />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1f2937",
-              borderColor: "#374151",
-              color: "#fff",
-              borderRadius: "0.5rem"
+              background: "oklch(18% 0.012 250)",
+              borderColor: "oklch(28% 0.010 250)",
+              color: "oklch(95% 0.005 250)",
+              borderRadius: "0.5rem",
+              fontSize: "0.8rem",
+              boxShadow: "0 4px 12px oklch(0% 0 0 / 0.4)",
             }}
+            labelStyle={{ color: "oklch(68% 0.008 250)" }}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="level"
-            stroke="#3b82f6"
-            strokeWidth={3}
-            dot={{ r: 4, fill: "#3b82f6" }}
+            stroke="oklch(65% 0.20 250)"
+            strokeWidth={2}
+            fill="url(#waterGradient)"
+            dot={{ r: 3, fill: "oklch(65% 0.20 250)", strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: "oklch(65% 0.20 250)", strokeWidth: 2, stroke: "oklch(14% 0.010 250)" }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

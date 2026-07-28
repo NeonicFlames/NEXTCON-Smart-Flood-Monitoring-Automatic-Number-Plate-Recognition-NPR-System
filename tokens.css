@@ -1,0 +1,96 @@
+/* Hallmark · genre: modern-minimal · theme: Cobalt (Dark) · tone: utilitarian
+ * macrostructure: Workbench (dashboard) · nav: N3 side-rail · footer: none
+ * pre-emit critique: P5 H5 E5 S5 R5 V5
+ */
+
+:root {
+  /* ── Paper (surfaces: higher elevation = lighter in dark mode) ── */
+  --color-paper:    oklch(14% 0.010 250);   /* deep midnight background */
+  --color-paper-2:  oklch(18% 0.012 250);   /* card surface */
+  --color-paper-3:  oklch(23% 0.014 250);   /* hover/active surface & wells */
+
+  /* ── Ink (text) ── */
+  --color-ink:      oklch(95% 0.005 250);   /* primary text (near-white) */
+  --color-ink-2:    oklch(82% 0.008 250);   /* secondary text */
+
+  /* ── Neutrals ── */
+  --color-rule:     oklch(28% 0.010 250);   /* hairline borders */
+  --color-neutral:  oklch(68% 0.008 250);   /* label/caption text */
+  --color-muted:    oklch(52% 0.006 250);   /* tertiary text */
+
+  /* ── Accent (electric cobalt) ── */
+  --color-accent:   oklch(65% 0.20 250);   /* vibrant electric cobalt blue */
+  --color-accent-subtle: oklch(24% 0.05 250); /* subtle active background fill */
+
+  /* ── Focus ── */
+  --color-focus:    oklch(65% 0.20 250);
+
+  /* ── Semantic status (vibrant for dark mode) ── */
+  --color-safe:     oklch(70% 0.18 145);   /* luminous green */
+  --color-safe-subtle: oklch(22% 0.04 145);
+  --color-warn:     oklch(78% 0.18 85);    /* luminous amber */
+  --color-warn-subtle: oklch(24% 0.04 85);
+  --color-danger:   oklch(65% 0.22 25);    /* luminous danger red */
+  --color-danger-subtle: oklch(22% 0.05 25);
+  --color-info:     oklch(70% 0.16 245);   /* luminous cyan-blue */
+  --color-info-subtle: oklch(22% 0.04 245);
+
+  /* ── Typography ── */
+  --font-display:   var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-body:      var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-outlier:   var(--font-geist-mono), ui-monospace, "Cascadia Code", monospace;
+
+  /* ── Type scale (major third 1.25) ── */
+  --text-xs:        0.64rem;
+  --text-sm:        0.8rem;
+  --text-base:      1rem;
+  --text-md:        1.25rem;
+  --text-lg:        1.5625rem;
+  --text-xl:        1.953rem;
+  --text-2xl:       2.441rem;
+  --text-3xl:       3.052rem;
+  --text-display:   clamp(2.75rem, 5vw + 1rem, 5.25rem);
+
+  /* ── Spacing (4pt base) ── */
+  --space-3xs:      0.125rem;
+  --space-2xs:      0.25rem;
+  --space-xs:       0.5rem;
+  --space-sm:       0.75rem;
+  --space-md:       1rem;
+  --space-lg:       1.5rem;
+  --space-xl:       2.5rem;
+  --space-2xl:      4rem;
+  --space-3xl:      6rem;
+
+  /* ── Radii ── */
+  --radius-sm:      0.375rem;
+  --radius-md:      0.5rem;
+  --radius-lg:      0.75rem;
+  --radius-xl:      1rem;
+  --radius-full:    9999px;
+
+  /* ── Easings ── */
+  --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:        cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out:    cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Durations ── */
+  --dur-micro:      120ms;
+  --dur-short:      220ms;
+  --dur-long:       420ms;
+
+  /* ── Depth ── */
+  --shadow-whisper: 0 1px 3px oklch(0% 0 0 / 0.3);
+  --shadow-card:    0 1px 2px oklch(0% 0 0 / 0.25), 0 0 0 1px oklch(28% 0.010 250);
+
+  /* ── Z-index ── */
+  --z-base:         1;
+  --z-raised:       10;
+  --z-dropdown:     100;
+  --z-sticky:       200;
+  --z-modal:        400;
+  --z-toast:        500;
+
+  /* ── Rules ── */
+  --rule-hairline:  1px solid var(--color-rule);
+}
