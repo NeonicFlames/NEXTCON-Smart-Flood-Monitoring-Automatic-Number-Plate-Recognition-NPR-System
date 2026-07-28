@@ -36,11 +36,10 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isActive
                     ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
                     : "text-gray-400 hover:text-white hover:bg-gray-800/50"
-                }`}
+                  }`}
               >
                 <Icon size={20} />
                 <span>{item.name}</span>
@@ -51,4 +50,4 @@ export default function Sidebar() {
       </div>
     </aside>
   );
-}
+}

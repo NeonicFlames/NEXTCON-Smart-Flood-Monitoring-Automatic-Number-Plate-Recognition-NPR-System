@@ -10,7 +10,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -64,4 +64,4 @@ export default function WaterChart() {
       </ResponsiveContainer>
     </div>
   );
-}
+}

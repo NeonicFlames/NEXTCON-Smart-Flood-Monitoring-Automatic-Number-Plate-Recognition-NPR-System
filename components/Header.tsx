@@ -1,8 +1,8 @@
-export default function Header(){
+export default function Header() {
 
-return (
+  return (
 
-<header className="
+    <header className="
 h-20
 bg-[#111827]
 border-b
@@ -14,26 +14,26 @@ px-8
 ">
 
 
-<h2 className="
+      <h2 className="
 text-xl
 font-semibold
 text-white
 ">
 
-Dashboard
+        Dashboard
 
-</h2>
-
-
-
-<div className="flex items-center gap-2 text-gray-400">
-  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-  <span>System Online</span>
-</div>
+      </h2>
 
 
-</header>
 
-)
+      <div className="flex items-center gap-2 text-gray-400">
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <span>System Online</span>
+      </div>
+
+
+    </header>
+
+  )
 
 }

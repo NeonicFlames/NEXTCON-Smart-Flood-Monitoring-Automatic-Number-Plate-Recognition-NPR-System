@@ -83,8 +83,8 @@ export default function Alerts() {
                     item.status === "Danger"
                       ? "text-red-400 p-3 font-bold"
                       : item.status === "Warning"
-                      ? "text-yellow-400 p-3 font-bold"
-                      : "text-green-400 p-3 font-bold"
+                        ? "text-yellow-400 p-3 font-bold"
+                        : "text-green-400 p-3 font-bold"
                   }
                 >
                   {item.status}
