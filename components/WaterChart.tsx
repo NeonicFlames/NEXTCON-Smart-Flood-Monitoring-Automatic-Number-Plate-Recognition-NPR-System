@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   AreaChart,
   Area,
@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   CartesianGrid
 } from "recharts";
+import { getReadingHistory, subscribeToFloodReadings } from "@/lib/queries/flood";
 
 const emptySubscribe = () => () => { };
 
@@ -21,16 +22,52 @@ function useIsClient() {
   );
 }
 
-const data = [
-  { time: "8:00", level: 10 },
-  { time: "8:15", level: 12 },
-  { time: "8:30", level: 18 },
-  { time: "8:45", level: 25 },
-  { time: "9:00", level: 32 }
-];
+interface ChartPoint {
+  time: string;
+  level: number;
+}
 
 export default function WaterChart() {
   const isClient = useIsClient();
+  const [data, setData] = useState<ChartPoint[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const readings = await getReadingHistory(20);
+        setData(
+          readings.map((r: { created_at: string; depth_cm: number }) => ({
+            time: new Date(r.created_at).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+            level: Number(r.depth_cm),
+          }))
+        );
+      } catch (e) {
+        console.error("Failed to load chart data:", e);
+      }
+    }
+    load();
+
+    const sub = subscribeToFloodReadings((newReading) => {
+      const r = newReading as { created_at: string; depth_cm: number };
+      setData((prev) => [
+        ...prev.slice(-19),
+        {
+          time: new Date(r.created_at).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+          level: Number(r.depth_cm),
+        },
+      ]);
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }, []);
 
   if (!isClient) {
     return (
@@ -42,6 +79,20 @@ export default function WaterChart() {
         }}
       >
         Loading chart data…
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div
+        className="h-64 rounded-lg flex items-center justify-center text-sm"
+        style={{
+          background: "var(--color-paper-3)",
+          color: "var(--color-muted)",
+        }}
+      >
+        No flood readings yet
       </div>
     );
   }

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Settings as SettingsIcon,
   Waves,
@@ -7,8 +10,58 @@ import {
   Bell,
   Sliders
 } from "lucide-react";
+import { getSettings, updateSetting, getCameras } from "@/lib/queries/settings";
+import { getRegisteredVehicles } from "@/lib/queries/vehicles";
+
+interface CameraRecord {
+  id: string;
+  name: string;
+  model: string;
+  location: string;
+  resolution: string;
+  is_active: boolean;
+}
 
 export default function Settings() {
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [cameras, setCameras] = useState<CameraRecord[]>([]);
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [s, c, v] = await Promise.all([
+          getSettings(),
+          getCameras(),
+          getRegisteredVehicles(),
+        ]);
+        setSettings(s);
+        setCameras(c as CameraRecord[]);
+        setVehicleCount(v.length);
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+    }
+    load();
+  }, []);
+
+  async function handleUpdateSetting(key: string, value: string) {
+    setSaving(key);
+    try {
+      await updateSetting(key, value);
+      setSettings((prev) => ({ ...prev, [key]: value }));
+    } catch (e) {
+      console.error("Failed to update setting:", e);
+    }
+    setSaving(null);
+  }
+
+  const warningThreshold = settings.warning_threshold_cm ?? "25";
+  const dangerThreshold = settings.danger_threshold_cm ?? "40";
+  const smsEnabled = settings.sms_enabled === "true";
+  const pushEnabled = settings.push_enabled === "true";
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -33,7 +86,7 @@ export default function Settings() {
                 letterSpacing: "-0.02em",
               }}
             >
-              System Configuration & Hardware
+              System Configuration &amp; Hardware
             </h1>
             <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
               Manage sensor thresholds, camera feeds, and alert notifications
@@ -75,17 +128,21 @@ export default function Settings() {
             >
               Warning Trigger Level (cm)
             </label>
-            <div
-              className="mt-1.5 rounded-md px-4 py-2.5 text-sm font-medium"
+            <input
+              type="number"
+              value={warningThreshold}
+              onChange={(e) => handleUpdateSetting("warning_threshold_cm", e.target.value)}
+              className="mt-1.5 rounded-md px-4 py-2.5 text-sm font-medium w-full"
               style={{
                 background: "var(--color-paper-3)",
                 color: "var(--color-ink)",
                 fontFamily: "var(--font-outlier)",
                 fontVariantNumeric: "tabular-nums",
+                border: "1px solid var(--color-rule)",
+                outline: "none",
               }}
-            >
-              25 cm
-            </div>
+              disabled={saving === "warning_threshold_cm"}
+            />
           </div>
 
           <div>
@@ -95,22 +152,26 @@ export default function Settings() {
             >
               Danger Evacuation Level (cm)
             </label>
-            <div
-              className="mt-1.5 rounded-md px-4 py-2.5 text-sm font-medium"
+            <input
+              type="number"
+              value={dangerThreshold}
+              onChange={(e) => handleUpdateSetting("danger_threshold_cm", e.target.value)}
+              className="mt-1.5 rounded-md px-4 py-2.5 text-sm font-medium w-full"
               style={{
                 background: "var(--color-paper-3)",
                 color: "var(--color-ink)",
                 fontFamily: "var(--font-outlier)",
                 fontVariantNumeric: "tabular-nums",
+                border: "1px solid var(--color-rule)",
+                outline: "none",
               }}
-            >
-              40 cm
-            </div>
+              disabled={saving === "danger_threshold_cm"}
+            />
           </div>
         </div>
       </section>
 
-      {/* Hardware Telemetry Status — NO card-in-card nesting */}
+      {/* Hardware Telemetry Status */}
       <section className="card">
         <div className="flex items-center gap-2 mb-4">
           <Cpu size={16} style={{ color: "var(--color-info)" }} />
@@ -123,34 +184,71 @@ export default function Settings() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { icon: Camera, label: "ANPR Camera #01", status: "Online" },
-            { icon: Waves, label: "Ultrasonic Sensor", status: "Connected" },
-            { icon: Server, label: "NextCon Edge Server", status: "Running" },
-          ].map(({ icon: Icon, label, status }) => (
+          {cameras.map((cam) => (
             <div
-              key={label}
+              key={cam.id}
               className="rounded-lg p-4"
-              style={{
-                background: "var(--color-paper-3)",
-              }}
+              style={{ background: "var(--color-paper-3)" }}
             >
               <div
                 className="flex items-center gap-2 text-sm font-medium"
                 style={{ color: "var(--color-ink)" }}
               >
-                <Icon size={16} style={{ color: "var(--color-info)" }} />
-                {label}
+                <Camera size={16} style={{ color: "var(--color-info)" }} />
+                {cam.name}
               </div>
+              <p className="text-xs mt-1" style={{ color: "var(--color-neutral)" }}>
+                {cam.model} · {cam.resolution}
+              </p>
               <p
                 className="text-sm font-semibold mt-2 flex items-center gap-2"
-                style={{ color: "var(--color-safe)" }}
+                style={{ color: cam.is_active ? "var(--color-safe)" : "var(--color-neutral)" }}
               >
-                <span className="status-dot status-dot--safe" />
-                {status}
+                <span className={`status-dot ${cam.is_active ? "status-dot--safe" : "status-dot--warn"}`} />
+                {cam.is_active ? "Online" : "Standby"}
               </p>
             </div>
           ))}
+
+          <div
+            className="rounded-lg p-4"
+            style={{ background: "var(--color-paper-3)" }}
+          >
+            <div
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{ color: "var(--color-ink)" }}
+            >
+              <Waves size={16} style={{ color: "var(--color-info)" }} />
+              Ultrasonic Sensor
+            </div>
+            <p
+              className="text-sm font-semibold mt-2 flex items-center gap-2"
+              style={{ color: "var(--color-safe)" }}
+            >
+              <span className="status-dot status-dot--safe" />
+              Connected
+            </p>
+          </div>
+
+          <div
+            className="rounded-lg p-4"
+            style={{ background: "var(--color-paper-3)" }}
+          >
+            <div
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{ color: "var(--color-ink)" }}
+            >
+              <Server size={16} style={{ color: "var(--color-info)" }} />
+              NextCon Edge Server
+            </div>
+            <p
+              className="text-sm font-semibold mt-2 flex items-center gap-2"
+              style={{ color: "var(--color-safe)" }}
+            >
+              <span className="status-dot status-dot--safe" />
+              Running
+            </p>
+          </div>
         </div>
       </section>
 
@@ -162,46 +260,50 @@ export default function Settings() {
             className="text-sm font-semibold"
             style={{ color: "var(--color-ink)" }}
           >
-            Broadcast & Notification Channels
+            Broadcast &amp; Notification Channels
           </h2>
         </div>
 
         <div className="space-y-2">
-          {[
-            { label: "SMS Broadcast on Warning Threshold", active: true },
-            { label: "Emergency Evacuation Push Alert", active: true },
-          ].map(({ label, active }) => (
-            <div
-              key={label}
-              className="flex justify-between items-center rounded-md px-4 py-3"
+          <div
+            className="flex justify-between items-center rounded-md px-4 py-3"
+            style={{ background: "var(--color-paper-3)" }}
+          >
+            <p className="text-sm" style={{ color: "var(--color-ink)" }}>
+              SMS Broadcast on Warning Threshold
+            </p>
+            <button
+              onClick={() => handleUpdateSetting("sms_enabled", smsEnabled ? "false" : "true")}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer"
               style={{
-                background: "var(--color-paper-3)",
+                background: smsEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
+                color: smsEnabled ? "var(--color-safe)" : "var(--color-muted)",
+                border: smsEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
               }}
             >
-              <p
-                className="text-sm"
-                style={{ color: "var(--color-ink)" }}
-              >
-                {label}
-              </p>
-              <span
-                className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{
-                  background: active
-                    ? "var(--color-safe-subtle)"
-                    : "var(--color-paper-3)",
-                  color: active
-                    ? "var(--color-safe)"
-                    : "var(--color-muted)",
-                  border: active
-                    ? "1px solid oklch(70% 0.18 145 / 0.2)"
-                    : "none",
-                }}
-              >
-                {active ? "ON" : "OFF"}
-              </span>
-            </div>
-          ))}
+              {smsEnabled ? "ON" : "OFF"}
+            </button>
+          </div>
+
+          <div
+            className="flex justify-between items-center rounded-md px-4 py-3"
+            style={{ background: "var(--color-paper-3)" }}
+          >
+            <p className="text-sm" style={{ color: "var(--color-ink)" }}>
+              Emergency Evacuation Push Alert
+            </p>
+            <button
+              onClick={() => handleUpdateSetting("push_enabled", pushEnabled ? "false" : "true")}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer"
+              style={{
+                background: pushEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
+                color: pushEnabled ? "var(--color-safe)" : "var(--color-muted)",
+                border: pushEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
+              }}
+            >
+              {pushEnabled ? "ON" : "OFF"}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -220,8 +322,8 @@ export default function Settings() {
             <p className="font-medium mt-0.5" style={{ color: "var(--color-ink)" }}>NextCon v1.0</p>
           </div>
           <div>
-            <p className="text-xs" style={{ color: "var(--color-muted)" }}>Last Calibration</p>
-            <p className="font-medium mt-0.5" style={{ color: "var(--color-ink)", fontFamily: "var(--font-outlier)" }}>21 July 2026</p>
+            <p className="text-xs" style={{ color: "var(--color-muted)" }}>Registered Vehicles</p>
+            <p className="font-medium mt-0.5" style={{ color: "var(--color-ink)", fontFamily: "var(--font-outlier)" }}>{vehicleCount}</p>
           </div>
           <div>
             <p className="text-xs" style={{ color: "var(--color-muted)" }}>Institution</p>

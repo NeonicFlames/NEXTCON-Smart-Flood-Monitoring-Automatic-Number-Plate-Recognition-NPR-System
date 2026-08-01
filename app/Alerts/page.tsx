@@ -1,34 +1,91 @@
-import { AlertCircle, AlertTriangle, ShieldAlert } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { AlertCircle, AlertTriangle, ShieldAlert, Check } from "lucide-react";
+import {
+  getActiveFloodAlerts,
+  getAlertHistory,
+  acknowledgeAlert,
+  subscribeToAlerts,
+} from "@/lib/queries/alerts";
+import { getLatestReading } from "@/lib/queries/flood";
+
+interface FloodAlert {
+  id: string;
+  plate_number: string;
+  flood_level_cm: number;
+  alert_type: string;
+  message: string;
+  is_notified: boolean;
+  is_acknowledged: boolean;
+  created_at: string;
+  registered_vehicles?: {
+    owner_name: string;
+    phone: string;
+    zone: string;
+  } | null;
+}
+
+interface FloodReading {
+  depth_cm: number;
+  status: string;
+}
 
 export default function Alerts() {
-  const history = [
-    {
-      date: "21 July 2026",
-      level: "42 cm",
-      status: "Danger",
-    },
-    {
-      date: "20 July 2026",
-      level: "28 cm",
-      status: "Warning",
-    },
-    {
-      date: "18 July 2026",
-      level: "10 cm",
-      status: "Normal",
-    },
-  ];
+  const [activeAlerts, setActiveAlerts] = useState<FloodAlert[]>([]);
+  const [history, setHistory] = useState<FloodAlert[]>([]);
+  const [reading, setReading] = useState<FloodReading | null>(null);
 
-  const statusStyle = (status: string) => {
-    switch (status) {
-      case "Danger":
+  useEffect(() => {
+    async function load() {
+      try {
+        const [active, hist, r] = await Promise.all([
+          getActiveFloodAlerts(),
+          getAlertHistory(20),
+          getLatestReading(),
+        ]);
+        setActiveAlerts(active as FloodAlert[]);
+        setHistory(hist as FloodAlert[]);
+        setReading(r);
+      } catch (e) {
+        console.error("Failed to load alerts:", e);
+      }
+    }
+    load();
+
+    const sub = subscribeToAlerts((newAlert) => {
+      setActiveAlerts((prev) => [newAlert as FloodAlert, ...prev]);
+      setHistory((prev) => [newAlert as FloodAlert, ...prev]);
+    });
+    return () => { sub.unsubscribe(); };
+  }, []);
+
+  async function handleAcknowledge(alertId: string) {
+    try {
+      await acknowledgeAlert(alertId);
+      setActiveAlerts((prev) => prev.filter((a) => a.id !== alertId));
+      setHistory((prev) =>
+        prev.map((a) => (a.id === alertId ? { ...a, is_acknowledged: true } : a))
+      );
+    } catch (e) {
+      console.error("Failed to acknowledge alert:", e);
+    }
+  }
+
+  const status = reading?.status ?? "SAFE";
+  const depth = reading?.depth_cm ?? 0;
+  const hasActiveAlerts = activeAlerts.length > 0 || status === "DANGER" || status === "WARNING";
+
+  const statusStyle = (alertType: string) => {
+    switch (alertType) {
+      case "DANGER":
         return {
           bg: "var(--color-danger-subtle)",
           color: "var(--color-danger)",
           border: "oklch(65% 0.22 25 / 0.3)",
           dot: "status-dot--danger",
         };
-      case "Warning":
+      case "WARNING":
         return {
           bg: "var(--color-warn-subtle)",
           color: "var(--color-warn)",
@@ -80,93 +137,163 @@ export default function Alerts() {
         <div
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
           style={{
-            background: "var(--color-danger-subtle)",
-            color: "var(--color-danger)",
-            border: "1px solid oklch(65% 0.22 25 / 0.3)",
+            background: hasActiveAlerts ? "var(--color-danger-subtle)" : "var(--color-safe-subtle)",
+            color: hasActiveAlerts ? "var(--color-danger)" : "var(--color-safe)",
+            border: `1px solid ${hasActiveAlerts ? "oklch(65% 0.22 25 / 0.3)" : "oklch(70% 0.18 145 / 0.3)"}`,
             fontFamily: "var(--font-outlier)",
           }}
         >
           <ShieldAlert size={14} />
-          <span>Active Alert Level · Danger</span>
+          <span>
+            {hasActiveAlerts
+              ? `Active Alert Level · ${status}`
+              : "No Active Alerts"}
+          </span>
         </div>
       </div>
 
-      {/* Current Danger Alert Panel — NO card-in-card nesting */}
-      <section
-        className="card p-6"
-        style={{
-          background: "var(--color-danger-subtle)",
-          borderLeft: "4px solid var(--color-danger)",
-          borderColor: "oklch(65% 0.22 25 / 0.3)",
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="status-dot status-dot--danger" />
+      {/* Current Alert Panel */}
+      {hasActiveAlerts && (
+        <section
+          className="card p-6"
+          style={{
+            background: status === "DANGER" ? "var(--color-danger-subtle)" : "var(--color-warn-subtle)",
+            borderLeft: `4px solid ${status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)"}`,
+            borderColor: status === "DANGER" ? "oklch(65% 0.22 25 / 0.3)" : "oklch(78% 0.18 85 / 0.3)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className={`status-dot ${status === "DANGER" ? "status-dot--danger" : "status-dot--warn"}`} />
+              <span
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)" }}
+              >
+                {status === "DANGER" ? "CRITICAL FLOOD ALERT" : "FLOOD WARNING"}
+              </span>
+            </div>
+
             <span
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: "var(--color-danger)" }}
+              className="text-xs font-medium px-2.5 py-0.5 rounded"
+              style={{
+                background: "var(--color-paper-2)",
+                color: status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)",
+                fontFamily: "var(--font-outlier)",
+              }}
             >
-              CRITICAL FLOOD ALERT
+              BROADCAST ACTIVE
             </span>
           </div>
 
-          <span
-            className="text-xs font-medium px-2.5 py-0.5 rounded"
-            style={{
-              background: "var(--color-paper-2)",
-              color: "var(--color-danger)",
-              fontFamily: "var(--font-outlier)",
-            }}
+          <h2
+            className="text-2xl font-bold mt-3"
+            style={{ color: "var(--color-ink)" }}
           >
-            BROADCAST ACTIVE
-          </span>
-        </div>
+            Flood Detected in Student Parking Zone A
+          </h2>
 
-        <h2
-          className="text-2xl font-bold mt-3"
-          style={{ color: "var(--color-ink)" }}
+          <p className="text-sm mt-2" style={{ color: "var(--color-ink-2)" }}>
+            Water sensor reading is currently{" "}
+            <strong
+              style={{
+                color: status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)",
+                fontFamily: "var(--font-outlier)",
+              }}
+            >
+              {depth} cm
+            </strong>
+            , exceeding the {status === "DANGER" ? "40 cm danger" : "25 cm warning"} ceiling.
+          </p>
+        </section>
+      )}
+
+      {/* Active Alerts with Acknowledge */}
+      {activeAlerts.length > 0 && (
+        <section className="card">
+          <h2
+            className="text-sm font-semibold mb-4"
+            style={{ color: "var(--color-ink)" }}
+          >
+            Unacknowledged Alerts ({activeAlerts.length})
+          </h2>
+          <div className="space-y-3">
+            {activeAlerts.map((alert) => {
+              const s = statusStyle(alert.alert_type);
+              return (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between rounded-lg p-4"
+                  style={{ background: s.bg, border: `1px solid ${s.border}` }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`status-dot ${s.dot}`} />
+                      <span
+                        className="text-xs font-bold uppercase tracking-wider"
+                        style={{ color: s.color }}
+                      >
+                        {alert.alert_type}
+                      </span>
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: "var(--color-accent)", fontFamily: "var(--font-outlier)", letterSpacing: "0.03em" }}
+                      >
+                        {alert.plate_number}
+                      </span>
+                    </div>
+                    <p className="text-xs truncate" style={{ color: "var(--color-ink-2)" }}>
+                      {alert.message}
+                    </p>
+                    {alert.registered_vehicles && (
+                      <p className="text-xs mt-0.5" style={{ color: "var(--color-neutral)" }}>
+                        Owner: {alert.registered_vehicles.owner_name} · {alert.registered_vehicles.phone}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleAcknowledge(alert.id)}
+                    className="shrink-0 ml-4 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer"
+                    style={{
+                      background: "var(--color-paper-2)",
+                      color: "var(--color-ink)",
+                      border: "1px solid var(--color-rule)",
+                    }}
+                  >
+                    <Check size={14} />
+                    Acknowledge
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Evacuation Action Panel */}
+      {hasActiveAlerts && (
+        <section
+          className="card p-5"
+          style={{
+            background: "var(--color-warn-subtle)",
+            borderLeft: "4px solid var(--color-warn)",
+            borderColor: "oklch(78% 0.18 85 / 0.3)",
+          }}
         >
-          Flood Detected in Student Parking Zone A
-        </h2>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={18} style={{ color: "var(--color-warn)" }} />
+            <h3
+              className="text-sm font-semibold"
+              style={{ color: "var(--color-warn)" }}
+            >
+              Immediate Action Required
+            </h3>
+          </div>
 
-        <p className="text-sm mt-2" style={{ color: "var(--color-ink-2)" }}>
-          Water sensor reading is currently{" "}
-          <strong
-            style={{
-              color: "var(--color-danger)",
-              fontFamily: "var(--font-outlier)",
-            }}
-          >
-            42 cm
-          </strong>
-          , exceeding the 40 cm danger ceiling.
-        </p>
-      </section>
-
-      {/* Required Evacuation Action Panel — NO card-in-card nesting */}
-      <section
-        className="card p-5"
-        style={{
-          background: "var(--color-warn-subtle)",
-          borderLeft: "4px solid var(--color-warn)",
-          borderColor: "oklch(78% 0.18 85 / 0.3)",
-        }}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle size={18} style={{ color: "var(--color-warn)" }} />
-          <h3
-            className="text-sm font-semibold"
-            style={{ color: "var(--color-warn)" }}
-          >
-            Immediate Action Required
-          </h3>
-        </div>
-
-        <p className="text-sm" style={{ color: "var(--color-ink)" }}>
-          All vehicle owners parked in Zone A are instructed to relocate their vehicles immediately to higher ground at Main Building Lot C.
-        </p>
-      </section>
+          <p className="text-sm" style={{ color: "var(--color-ink)" }}>
+            All vehicle owners parked in Zone A are instructed to relocate their vehicles immediately to higher ground at Main Building Lot C.
+          </p>
+        </section>
+      )}
 
       {/* Alert History Table */}
       <section className="card-flush">
@@ -202,6 +329,12 @@ export default function Alerts() {
                   className="text-left px-5 py-2.5 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
+                  Vehicle
+                </th>
+                <th
+                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  style={{ color: "var(--color-neutral)" }}
+                >
                   Peak Water Level
                 </th>
                 <th
@@ -214,11 +347,18 @@ export default function Alerts() {
             </thead>
 
             <tbody>
+              {history.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm" style={{ color: "var(--color-muted)" }}>
+                    No alert history
+                  </td>
+                </tr>
+              )}
               {history.map((item, index) => {
-                const s = statusStyle(item.status);
+                const s = statusStyle(item.alert_type);
                 return (
                   <tr
-                    key={index}
+                    key={item.id ?? index}
                     style={{
                       borderBottom:
                         index < history.length - 1
@@ -233,7 +373,21 @@ export default function Alerts() {
                         fontFamily: "var(--font-outlier)",
                       }}
                     >
-                      {item.date}
+                      {new Date(item.created_at).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td
+                      className="px-5 py-3 font-semibold"
+                      style={{
+                        color: "var(--color-accent)",
+                        fontFamily: "var(--font-outlier)",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {item.plate_number}
                     </td>
                     <td
                       className="px-5 py-3 font-semibold"
@@ -243,7 +397,7 @@ export default function Alerts() {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {item.level}
+                      {item.flood_level_cm} cm
                     </td>
                     <td className="px-5 py-3">
                       <span
@@ -255,7 +409,8 @@ export default function Alerts() {
                         }}
                       >
                         <span className={`status-dot ${s.dot}`} />
-                        {item.status}
+                        {item.alert_type}
+                        {item.is_acknowledged && " · Ack"}
                       </span>
                     </td>
                   </tr>

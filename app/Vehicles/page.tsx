@@ -1,26 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Car, Camera, CheckCircle2 } from "lucide-react";
+import { getRecentDetections, getTodayCount, subscribeToDetections } from "@/lib/queries/vehicles";
+
+interface Detection {
+  id: string;
+  plate_number: string;
+  confidence: number;
+  is_registered: boolean;
+  created_at: string;
+}
 
 export default function Vehicles() {
-  const vehicles = [
-    {
-      plate: "ABC1234",
-      time: "8:30 PM",
-      confidence: "98%",
-      status: "Verified",
-    },
-    {
-      plate: "XYZ8899",
-      time: "8:25 PM",
-      confidence: "96%",
-      status: "Verified",
-    },
-    {
-      plate: "WXX7777",
-      time: "8:20 PM",
-      confidence: "91%",
-      status: "Verified",
-    },
-  ];
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [todayCount, setTodayCount] = useState(0);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [d, c] = await Promise.all([
+          getRecentDetections(10),
+          getTodayCount(),
+        ]);
+        setDetections(d as Detection[]);
+        setTodayCount(c);
+      } catch (e) {
+        console.error("Failed to load vehicle data:", e);
+      }
+    }
+    load();
+
+    const sub = subscribeToDetections((newDetection) => {
+      setDetections((prev) => [newDetection as Detection, ...prev.slice(0, 9)]);
+      setTodayCount((c) => c + 1);
+    });
+    return () => { sub.unsubscribe(); };
+  }, []);
+
+  const latest = detections[0];
 
   return (
     <div className="space-y-6">
@@ -95,7 +113,7 @@ export default function Vehicles() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            128
+            {todayCount}
           </p>
         </div>
 
@@ -111,64 +129,71 @@ export default function Vehicles() {
               letterSpacing: "0.04em",
             }}
           >
-            ABC1234
+            {latest?.plate_number ?? "—"}
           </p>
         </div>
       </div>
 
-      {/* Latest Plate Spotlight — NO card-in-card nesting */}
-      <section className="card flex flex-col md:flex-row items-center justify-between gap-6 p-6">
-        <div>
-          <span
-            className="text-xs font-medium px-2.5 py-1 rounded"
-            style={{
-              background: "var(--color-paper-3)",
-              color: "var(--color-neutral)",
-              fontFamily: "var(--font-outlier)",
-            }}
-          >
-            LATEST EXTRACTION
-          </span>
-          <h2
-            className="text-4xl font-extrabold mt-3 tracking-wider"
-            style={{
-              color: "var(--color-accent)",
-              fontFamily: "var(--font-outlier)",
-            }}
-          >
-            ABC1234
-          </h2>
-          <p className="text-sm mt-1" style={{ color: "var(--color-neutral)" }}>
-            Captured at 8:30 PM · Student Zone A Access Gate
-          </p>
-        </div>
-
-        <div
-          className="flex items-center gap-4 px-6 py-4 rounded-lg self-stretch md:self-auto justify-center"
-          style={{
-            background: "var(--color-paper-3)",
-          }}
-        >
-          <CheckCircle2 size={32} style={{ color: "var(--color-safe)" }} />
+      {/* Latest Plate Spotlight */}
+      {latest && (
+        <section className="card flex flex-col md:flex-row items-center justify-between gap-6 p-6">
           <div>
-            <p
-              className="text-xs font-medium uppercase tracking-wide"
-              style={{ color: "var(--color-neutral)" }}
-            >
-              Match Confidence
-            </p>
-            <p
-              className="text-xl font-bold"
+            <span
+              className="text-xs font-medium px-2.5 py-1 rounded"
               style={{
-                color: "var(--color-safe)",
+                background: "var(--color-paper-3)",
+                color: "var(--color-neutral)",
                 fontFamily: "var(--font-outlier)",
               }}
             >
-              98.4%
+              LATEST EXTRACTION
+            </span>
+            <h2
+              className="text-4xl font-extrabold mt-3 tracking-wider"
+              style={{
+                color: "var(--color-accent)",
+                fontFamily: "var(--font-outlier)",
+              }}
+            >
+              {latest.plate_number}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--color-neutral)" }}>
+              Captured at{" "}
+              {new Date(latest.created_at).toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+              })}{" "}
+              · Student Zone A Access Gate
             </p>
           </div>
-        </div>
-      </section>
+
+          <div
+            className="flex items-center gap-4 px-6 py-4 rounded-lg self-stretch md:self-auto justify-center"
+            style={{
+              background: "var(--color-paper-3)",
+            }}
+          >
+            <CheckCircle2 size={32} style={{ color: latest.is_registered ? "var(--color-safe)" : "var(--color-warn)" }} />
+            <div>
+              <p
+                className="text-xs font-medium uppercase tracking-wide"
+                style={{ color: "var(--color-neutral)" }}
+              >
+                Match Confidence
+              </p>
+              <p
+                className="text-xl font-bold"
+                style={{
+                  color: latest.is_registered ? "var(--color-safe)" : "var(--color-warn)",
+                  fontFamily: "var(--font-outlier)",
+                }}
+              >
+                {(latest.confidence * 100).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Detection History Table */}
       <section className="card-flush">
@@ -186,7 +211,7 @@ export default function Vehicles() {
               fontFamily: "var(--font-outlier)",
             }}
           >
-            Showing last 3 entries
+            Showing last {detections.length} entries
           </span>
         </div>
 
@@ -222,12 +247,19 @@ export default function Vehicles() {
             </thead>
 
             <tbody>
-              {vehicles.map((vehicle, index) => (
+              {detections.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm" style={{ color: "var(--color-muted)" }}>
+                    No detections yet
+                  </td>
+                </tr>
+              )}
+              {detections.map((d, index) => (
                 <tr
-                  key={index}
+                  key={d.id ?? index}
                   style={{
                     borderBottom:
-                      index < vehicles.length - 1
+                      index < detections.length - 1
                         ? "1px solid var(--color-rule)"
                         : "none",
                   }}
@@ -240,7 +272,7 @@ export default function Vehicles() {
                       letterSpacing: "0.03em",
                     }}
                   >
-                    {vehicle.plate}
+                    {d.plate_number}
                   </td>
                   <td
                     className="px-5 py-3"
@@ -249,7 +281,10 @@ export default function Vehicles() {
                       fontFamily: "var(--font-outlier)",
                     }}
                   >
-                    {vehicle.time}
+                    {new Date(d.created_at).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
                   </td>
                   <td
                     className="px-5 py-3 font-medium"
@@ -258,19 +293,34 @@ export default function Vehicles() {
                       fontFamily: "var(--font-outlier)",
                     }}
                   >
-                    {vehicle.confidence}
+                    {Math.round(d.confidence * 100)}%
                   </td>
                   <td className="px-5 py-3">
                     <span
                       className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
                       style={{
-                        background: "var(--color-safe-subtle)",
-                        color: "var(--color-safe)",
-                        border: "1px solid oklch(70% 0.18 145 / 0.2)",
+                        background: d.is_registered
+                          ? "var(--color-safe-subtle)"
+                          : "var(--color-warn-subtle)",
+                        color: d.is_registered
+                          ? "var(--color-safe)"
+                          : "var(--color-warn)",
+                        border: `1px solid ${
+                          d.is_registered
+                            ? "oklch(70% 0.18 145 / 0.2)"
+                            : "oklch(78% 0.18 85 / 0.2)"
+                        }`,
                       }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-safe)" }} />
-                      {vehicle.status}
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{
+                          background: d.is_registered
+                            ? "var(--color-safe)"
+                            : "var(--color-warn)",
+                        }}
+                      />
+                      {d.is_registered ? "Registered" : "Unregistered"}
                     </span>
                   </td>
                 </tr>

@@ -1,7 +1,80 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import WaterChart from "@/components/WaterChart";
 import { LayoutDashboard, Camera, ShieldCheck } from "lucide-react";
+import { getLatestReading } from "@/lib/queries/flood";
+import { getRecentDetections, getTodayCount } from "@/lib/queries/vehicles";
+import { subscribeToFloodReadings } from "@/lib/queries/flood";
+import { subscribeToDetections } from "@/lib/queries/vehicles";
+
+interface FloodReading {
+  depth_cm: number;
+  status: string;
+}
+
+interface Detection {
+  id: string;
+  plate_number: string;
+  confidence: number;
+  is_registered: boolean;
+  created_at: string;
+}
 
 export default function Home() {
+  const [reading, setReading] = useState<FloodReading | null>(null);
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [todayCount, setTodayCount] = useState(0);
+  const [updatedAgo, setUpdatedAgo] = useState("—");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [r, d, c] = await Promise.all([
+          getLatestReading(),
+          getRecentDetections(5),
+          getTodayCount(),
+        ]);
+        setReading(r);
+        setDetections(d as Detection[]);
+        setTodayCount(c);
+        setUpdatedAgo("just now");
+      } catch (e) {
+        console.error("Failed to load dashboard data:", e);
+      }
+    }
+    load();
+
+    const floodSub = subscribeToFloodReadings((newReading) => {
+      setReading(newReading as FloodReading);
+      setUpdatedAgo("just now");
+    });
+    const detSub = subscribeToDetections((newDetection) => {
+      setDetections((prev) => [newDetection as Detection, ...prev.slice(0, 4)]);
+      setTodayCount((c) => c + 1);
+      setUpdatedAgo("just now");
+    });
+
+    return () => {
+      floodSub.unsubscribe();
+      detSub.unsubscribe();
+    };
+  }, []);
+
+  const statusColor =
+    reading?.status === "DANGER"
+      ? "var(--color-danger)"
+      : reading?.status === "WARNING"
+      ? "var(--color-warn)"
+      : "var(--color-safe)";
+
+  const statusDot =
+    reading?.status === "DANGER"
+      ? "status-dot--danger"
+      : reading?.status === "WARNING"
+      ? "status-dot--warn"
+      : "status-dot--safe";
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -26,10 +99,10 @@ export default function Home() {
                 letterSpacing: "-0.02em",
               }}
             >
-              Smart Flood & Vehicle Telemetry
+              Smart Flood &amp; Vehicle Telemetry
             </h1>
             <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Real-time environmental monitoring & automatic plate recognition
+              Real-time environmental monitoring &amp; automatic plate recognition
             </p>
           </div>
         </div>
@@ -68,10 +141,11 @@ export default function Home() {
             Flood Condition
           </p>
           <p
-            className="text-2xl font-bold mt-1"
-            style={{ color: "var(--color-safe)" }}
+            className="text-2xl font-bold mt-1 flex items-center gap-2"
+            style={{ color: statusColor }}
           >
-            SAFE
+            <span className={`status-dot ${statusDot}`} />
+            {reading?.status ?? "—"}
           </p>
         </div>
 
@@ -87,7 +161,7 @@ export default function Home() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            12 cm
+            {reading ? `${reading.depth_cm} cm` : "—"}
           </p>
         </div>
 
@@ -103,7 +177,7 @@ export default function Home() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            128
+            {todayCount}
           </p>
         </div>
 
@@ -119,7 +193,7 @@ export default function Home() {
               letterSpacing: "0.04em",
             }}
           >
-            ABC1234
+            {detections[0]?.plate_number ?? "—"}
           </p>
         </div>
       </section>
@@ -140,7 +214,7 @@ export default function Home() {
               fontFamily: "var(--font-outlier)",
             }}
           >
-            Updated 1m ago
+            Updated {updatedAgo}
           </span>
         </div>
 
@@ -175,92 +249,84 @@ export default function Home() {
               </tr>
             </thead>
             <tbody>
-              <tr style={{ borderBottom: "1px solid var(--color-rule)" }}>
-                <td
-                  className="px-5 py-3 font-semibold"
+              {detections.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm" style={{ color: "var(--color-muted)" }}>
+                    No detections yet
+                  </td>
+                </tr>
+              )}
+              {detections.map((d, i) => (
+                <tr
+                  key={d.id ?? i}
                   style={{
-                    color: "var(--color-accent)",
-                    fontFamily: "var(--font-outlier)",
-                    letterSpacing: "0.03em",
+                    borderBottom:
+                      i < detections.length - 1
+                        ? "1px solid var(--color-rule)"
+                        : "none",
                   }}
                 >
-                  ABC1234
-                </td>
-                <td
-                  className="px-5 py-3"
-                  style={{
-                    color: "var(--color-ink-2)",
-                    fontFamily: "var(--font-outlier)",
-                  }}
-                >
-                  8:30 PM
-                </td>
-                <td
-                  className="px-5 py-3 font-medium"
-                  style={{
-                    color: "var(--color-safe)",
-                    fontFamily: "var(--font-outlier)",
-                  }}
-                >
-                  98%
-                </td>
-                <td className="px-5 py-3">
-                  <span
-                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                  <td
+                    className="px-5 py-3 font-semibold"
                     style={{
-                      background: "var(--color-safe-subtle)",
-                      color: "var(--color-safe)",
-                      border: "1px solid oklch(70% 0.18 145 / 0.2)",
+                      color: "var(--color-accent)",
+                      fontFamily: "var(--font-outlier)",
+                      letterSpacing: "0.03em",
                     }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-safe)" }} />
-                    Verified
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td
-                  className="px-5 py-3 font-semibold"
-                  style={{
-                    color: "var(--color-accent)",
-                    fontFamily: "var(--font-outlier)",
-                    letterSpacing: "0.03em",
-                  }}
-                >
-                  XYZ8899
-                </td>
-                <td
-                  className="px-5 py-3"
-                  style={{
-                    color: "var(--color-ink-2)",
-                    fontFamily: "var(--font-outlier)",
-                  }}
-                >
-                  8:25 PM
-                </td>
-                <td
-                  className="px-5 py-3 font-medium"
-                  style={{
-                    color: "var(--color-safe)",
-                    fontFamily: "var(--font-outlier)",
-                  }}
-                >
-                  96%
-                </td>
-                <td className="px-5 py-3">
-                  <span
-                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                    {d.plate_number}
+                  </td>
+                  <td
+                    className="px-5 py-3"
                     style={{
-                      background: "var(--color-safe-subtle)",
-                      color: "var(--color-safe)",
-                      border: "1px solid oklch(70% 0.18 145 / 0.2)",
+                      color: "var(--color-ink-2)",
+                      fontFamily: "var(--font-outlier)",
                     }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-safe)" }} />
-                    Verified
-                  </span>
-                </td>
-              </tr>
+                    {new Date(d.created_at).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td
+                    className="px-5 py-3 font-medium"
+                    style={{
+                      color: "var(--color-safe)",
+                      fontFamily: "var(--font-outlier)",
+                    }}
+                  >
+                    {Math.round(d.confidence * 100)}%
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                      style={{
+                        background: d.is_registered
+                          ? "var(--color-safe-subtle)"
+                          : "var(--color-warn-subtle)",
+                        color: d.is_registered
+                          ? "var(--color-safe)"
+                          : "var(--color-warn)",
+                        border: `1px solid ${
+                          d.is_registered
+                            ? "oklch(70% 0.18 145 / 0.2)"
+                            : "oklch(78% 0.18 85 / 0.2)"
+                        }`,
+                      }}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{
+                          background: d.is_registered
+                            ? "var(--color-safe)"
+                            : "var(--color-warn)",
+                        }}
+                      />
+                      {d.is_registered ? "Registered" : "Unregistered"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
