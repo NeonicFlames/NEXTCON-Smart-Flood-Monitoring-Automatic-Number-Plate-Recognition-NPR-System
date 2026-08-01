@@ -324,7 +324,6 @@ export default function Home() {
                 color: "var(--color-neutral)",
               }}
             >
-              Sensor #01
             </span>
           </div>
           <WaterChart />

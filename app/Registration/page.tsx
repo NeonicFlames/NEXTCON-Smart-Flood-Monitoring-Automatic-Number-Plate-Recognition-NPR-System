@@ -119,6 +119,7 @@ export default function RegistrationPage() {
       );
     } catch (err) {
       console.error("Failed to toggle vehicle status:", err);
+      alert("Failed to update vehicle permit status. Please try again.");
     }
   };
 

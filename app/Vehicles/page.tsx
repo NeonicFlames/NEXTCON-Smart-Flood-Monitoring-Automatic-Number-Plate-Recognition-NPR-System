@@ -70,18 +70,8 @@ export default function Vehicles() {
           </div>
         </div>
 
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto font-outlier"
-          style={{
-            background: "var(--color-paper-2)",
-            color: "var(--color-neutral)",
-            border: "1px solid var(--color-rule)",
-          }}
-        >
-          <Camera size={14} style={{ color: "var(--color-accent)" }} />
-          <span>Camera #01 · Active</span>
-        </div>
       </div>
+
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -292,11 +282,10 @@ export default function Vehicles() {
                         color: d.is_registered
                           ? "var(--color-safe)"
                           : "var(--color-warn)",
-                        border: `1px solid ${
-                          d.is_registered
-                            ? "oklch(70% 0.18 145 / 0.2)"
-                            : "oklch(78% 0.18 85 / 0.2)"
-                        }`,
+                        border: `1px solid ${d.is_registered
+                          ? "oklch(70% 0.18 145 / 0.2)"
+                          : "oklch(78% 0.18 85 / 0.2)"
+                          }`,
                       }}
                     >
                       <span
