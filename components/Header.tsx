@@ -42,7 +42,7 @@ export default function Header() {
         }}
       >
         <span className="status-dot status-dot--safe" />
-        <span>System Operational</span>
+        <span>ONLINE</span>
       </div>
     </header>
   );

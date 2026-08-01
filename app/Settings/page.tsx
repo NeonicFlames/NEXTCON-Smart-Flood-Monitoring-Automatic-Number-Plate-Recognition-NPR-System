@@ -59,7 +59,7 @@ export default function Settings() {
 
   const warningThreshold = settings.warning_threshold_cm ?? "25";
   const dangerThreshold = settings.danger_threshold_cm ?? "40";
-  const smsEnabled = settings.sms_enabled === "true";
+  const telegramEnabled = settings.telegram_enabled === "true";
   const pushEnabled = settings.push_enabled === "true";
 
   return (
@@ -270,18 +270,18 @@ export default function Settings() {
             style={{ background: "var(--color-paper-3)" }}
           >
             <p className="text-sm" style={{ color: "var(--color-ink)" }}>
-              SMS Broadcast on Warning Threshold
+              Telegram Broadcast on Warning Threshold
             </p>
             <button
-              onClick={() => handleUpdateSetting("sms_enabled", smsEnabled ? "false" : "true")}
+              onClick={() => handleUpdateSetting("telegram_enabled", telegramEnabled ? "false" : "true")}
               className="text-xs font-semibold px-2.5 py-1 rounded-full cursor-pointer"
               style={{
-                background: smsEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
-                color: smsEnabled ? "var(--color-safe)" : "var(--color-muted)",
-                border: smsEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
+                background: telegramEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
+                color: telegramEnabled ? "var(--color-safe)" : "var(--color-muted)",
+                border: telegramEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
               }}
             >
-              {smsEnabled ? "ON" : "OFF"}
+              {telegramEnabled ? "ON" : "OFF"}
             </button>
           </div>
 
@@ -327,7 +327,7 @@ export default function Settings() {
           </div>
           <div>
             <p className="text-xs" style={{ color: "var(--color-muted)" }}>Institution</p>
-            <p className="font-medium mt-0.5" style={{ color: "var(--color-ink)" }}>UMK Bachok</p>
+            <p className="font-medium mt-0.5" style={{ color: "var(--color-ink)" }}>UMK</p>
           </div>
           <div>
             <p className="text-xs" style={{ color: "var(--color-muted)" }}>Faculty</p>
