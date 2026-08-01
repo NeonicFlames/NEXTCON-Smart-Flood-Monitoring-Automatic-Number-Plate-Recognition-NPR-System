@@ -132,10 +132,11 @@ export default function WaterChart() {
               borderColor: "oklch(28% 0.010 250)",
               color: "oklch(95% 0.005 250)",
               borderRadius: "0.5rem",
-              fontSize: "0.8rem",
+              fontSize: "var(--text-xs)",
+              fontFamily: "var(--font-outlier)",
               boxShadow: "0 4px 12px oklch(0% 0 0 / 0.4)",
             }}
-            labelStyle={{ color: "oklch(68% 0.008 250)" }}
+            labelStyle={{ color: "oklch(68% 0.008 250)", fontFamily: "var(--font-outlier)" }}
           />
           <Area
             type="monotone"

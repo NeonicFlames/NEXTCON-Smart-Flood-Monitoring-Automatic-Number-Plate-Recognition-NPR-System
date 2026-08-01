@@ -65,15 +65,15 @@ export default function Home() {
     reading?.status === "DANGER"
       ? "var(--color-danger)"
       : reading?.status === "WARNING"
-      ? "var(--color-warn)"
-      : "var(--color-safe)";
+        ? "var(--color-warn)"
+        : "var(--color-safe)";
 
   const statusDot =
     reading?.status === "DANGER"
       ? "status-dot--danger"
       : reading?.status === "WARNING"
-      ? "status-dot--warn"
-      : "status-dot--safe";
+        ? "status-dot--warn"
+        : "status-dot--safe";
 
   return (
     <div className="space-y-6">
@@ -92,11 +92,9 @@ export default function Home() {
           </div>
           <div>
             <h1
-              className="text-xl font-semibold tracking-tight"
+              className="font-display font-bold text-xl tracking-tight"
               style={{
                 color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
               }}
             >
               Smart Flood &amp; Vehicle Telemetry
@@ -107,28 +105,16 @@ export default function Home() {
           </div>
         </div>
 
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
-          style={{
-            background: "var(--color-paper-2)",
-            color: "var(--color-neutral)",
-            border: "1px solid var(--color-rule)",
-            fontFamily: "var(--font-outlier)",
-          }}
-        >
-          <ShieldCheck size={14} style={{ color: "var(--color-safe)" }} />
-          <span>Telemetry Live · Gate A</span>
-        </div>
       </div>
 
       {/* Primary Metrics */}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="card col-span-2 lg:col-span-1">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             System Status
           </p>
           <p
-            className="text-lg font-semibold mt-1.5 flex items-center gap-2"
+            className="text-lg font-display font-semibold mt-1 flex items-center gap-2"
             style={{ color: "var(--color-safe)" }}
           >
             <span className="status-dot status-dot--safe" />
@@ -137,11 +123,11 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Flood Condition
           </p>
           <p
-            className="text-2xl font-bold mt-1 flex items-center gap-2"
+            className="text-2xl font-display font-bold mt-1 flex items-center gap-2"
             style={{ color: statusColor }}
           >
             <span className={`status-dot ${statusDot}`} />
@@ -150,14 +136,13 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Water Depth
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl font-outlier font-bold mt-1"
             style={{
               color: "var(--color-info)",
-              fontFamily: "var(--font-outlier)",
               fontVariantNumeric: "tabular-nums",
             }}
           >
@@ -166,14 +151,13 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Detections Today
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl font-outlier font-bold mt-1"
             style={{
               color: "var(--color-ink)",
-              fontFamily: "var(--font-outlier)",
               fontVariantNumeric: "tabular-nums",
             }}
           >
@@ -182,15 +166,13 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Latest Detection
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl plate-number mt-1"
             style={{
               color: "var(--color-accent)",
-              fontFamily: "var(--font-outlier)",
-              letterSpacing: "0.04em",
             }}
           >
             {detections[0]?.plate_number ?? "—"}
@@ -202,16 +184,15 @@ export default function Home() {
       <section className="card-flush">
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
           <h2
-            className="text-sm font-semibold"
+            className="font-display font-semibold text-base"
             style={{ color: "var(--color-ink)" }}
           >
             Recent Vehicle Detections
           </h2>
           <span
-            className="text-xs"
+            className="text-xs font-outlier"
             style={{
               color: "var(--color-muted)",
-              fontFamily: "var(--font-outlier)",
             }}
           >
             Updated {updatedAgo}
@@ -223,25 +204,25 @@ export default function Home() {
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-rule)" }}>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-5 py-2.5 text-category"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Plate Number
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-5 py-2.5 text-category"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Time
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-5 py-2.5 text-category"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Confidence
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-5 py-2.5 text-category"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Status
@@ -267,20 +248,17 @@ export default function Home() {
                   }}
                 >
                   <td
-                    className="px-5 py-3 font-semibold"
+                    className="px-5 py-3 plate-number"
                     style={{
                       color: "var(--color-accent)",
-                      fontFamily: "var(--font-outlier)",
-                      letterSpacing: "0.03em",
                     }}
                   >
                     {d.plate_number}
                   </td>
                   <td
-                    className="px-5 py-3"
+                    className="px-5 py-3 font-outlier"
                     style={{
                       color: "var(--color-ink-2)",
-                      fontFamily: "var(--font-outlier)",
                     }}
                   >
                     {new Date(d.created_at).toLocaleTimeString([], {
@@ -289,17 +267,16 @@ export default function Home() {
                     })}
                   </td>
                   <td
-                    className="px-5 py-3 font-medium"
+                    className="px-5 py-3 font-outlier font-medium"
                     style={{
                       color: "var(--color-safe)",
-                      fontFamily: "var(--font-outlier)",
                     }}
                   >
                     {Math.round(d.confidence * 100)}%
                   </td>
                   <td className="px-5 py-3">
                     <span
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-1.5 text-xs font-outlier font-medium px-2.5 py-0.5 rounded-full"
                       style={{
                         background: d.is_registered
                           ? "var(--color-safe-subtle)"
@@ -307,11 +284,10 @@ export default function Home() {
                         color: d.is_registered
                           ? "var(--color-safe)"
                           : "var(--color-warn)",
-                        border: `1px solid ${
-                          d.is_registered
-                            ? "oklch(70% 0.18 145 / 0.2)"
-                            : "oklch(78% 0.18 85 / 0.2)"
-                        }`,
+                        border: `1px solid ${d.is_registered
+                          ? "oklch(70% 0.18 145 / 0.2)"
+                          : "oklch(78% 0.18 85 / 0.2)"
+                          }`,
                       }}
                     >
                       <span
@@ -337,16 +313,15 @@ export default function Home() {
         <section className="card">
           <div className="flex items-center justify-between mb-4">
             <h2
-              className="text-sm font-semibold"
+              className="font-display font-semibold text-base"
               style={{ color: "var(--color-ink)" }}
             >
               Water Level History
             </h2>
             <span
-              className="text-xs"
+              className="text-xs font-outlier"
               style={{
                 color: "var(--color-neutral)",
-                fontFamily: "var(--font-outlier)",
               }}
             >
               Sensor #01
@@ -358,18 +333,17 @@ export default function Home() {
         <section className="card flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <h2
-              className="text-sm font-semibold flex items-center gap-2"
+              className="font-display font-semibold text-base flex items-center gap-2"
               style={{ color: "var(--color-ink)" }}
             >
               <Camera size={16} style={{ color: "var(--color-info)" }} />
               <span>Camera Stream · Gate A</span>
             </h2>
             <span
-              className="text-xs font-medium px-2 py-0.5 rounded"
+              className="text-xs font-outlier font-medium px-2 py-0.5 rounded"
               style={{
                 background: "var(--color-paper-3)",
                 color: "var(--color-neutral)",
-                fontFamily: "var(--font-outlier)",
               }}
             >
               1080p · 30 FPS

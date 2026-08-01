@@ -57,14 +57,12 @@ export default function Vehicles() {
           </div>
           <div>
             <h1
-              className="text-xl font-semibold tracking-tight"
+              className="font-display font-bold text-xl tracking-tight"
               style={{
                 color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
               }}
             >
-              Number Plate Recognition (ANPR)
+              Automatic Number Plate Recognition (ANPR)
             </h1>
             <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
               Automated vehicle license plate extraction and verification
@@ -73,12 +71,11 @@ export default function Vehicles() {
         </div>
 
         <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto font-outlier"
           style={{
             background: "var(--color-paper-2)",
             color: "var(--color-neutral)",
             border: "1px solid var(--color-rule)",
-            fontFamily: "var(--font-outlier)",
           }}
         >
           <Camera size={14} style={{ color: "var(--color-accent)" }} />
@@ -89,11 +86,11 @@ export default function Vehicles() {
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             ANPR Engine
           </p>
           <p
-            className="text-lg font-semibold mt-1.5 flex items-center gap-2"
+            className="text-lg font-display font-semibold mt-1 flex items-center gap-2"
             style={{ color: "var(--color-safe)" }}
           >
             <span className="status-dot status-dot--safe" />
@@ -102,14 +99,13 @@ export default function Vehicles() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Total Detections Today
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl font-outlier font-bold mt-1"
             style={{
               color: "var(--color-info)",
-              fontFamily: "var(--font-outlier)",
               fontVariantNumeric: "tabular-nums",
             }}
           >
@@ -118,15 +114,13 @@ export default function Vehicles() {
         </div>
 
         <div className="card">
-          <p className="text-xs font-medium" style={{ color: "var(--color-neutral)" }}>
+          <p className="text-category">
             Latest Plate Identified
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl plate-number mt-1"
             style={{
               color: "var(--color-accent)",
-              fontFamily: "var(--font-outlier)",
-              letterSpacing: "0.04em",
             }}
           >
             {latest?.plate_number ?? "—"}
@@ -139,20 +133,18 @@ export default function Vehicles() {
         <section className="card flex flex-col md:flex-row items-center justify-between gap-6 p-6">
           <div>
             <span
-              className="text-xs font-medium px-2.5 py-1 rounded"
+              className="text-category px-2.5 py-1 rounded"
               style={{
                 background: "var(--color-paper-3)",
                 color: "var(--color-neutral)",
-                fontFamily: "var(--font-outlier)",
               }}
             >
               LATEST EXTRACTION
             </span>
             <h2
-              className="text-4xl font-extrabold mt-3 tracking-wider"
+              className="text-4xl plate-number mt-3"
               style={{
                 color: "var(--color-accent)",
-                fontFamily: "var(--font-outlier)",
               }}
             >
               {latest.plate_number}
@@ -163,7 +155,7 @@ export default function Vehicles() {
                 hour: "numeric",
                 minute: "2-digit",
               })}{" "}
-              · Student Zone A Access Gate
+              · Main Gate Camera
             </p>
           </div>
 
@@ -175,17 +167,13 @@ export default function Vehicles() {
           >
             <CheckCircle2 size={32} style={{ color: latest.is_registered ? "var(--color-safe)" : "var(--color-warn)" }} />
             <div>
-              <p
-                className="text-xs font-medium uppercase tracking-wide"
-                style={{ color: "var(--color-neutral)" }}
-              >
+              <p className="text-category" style={{ color: "var(--color-neutral)" }}>
                 Match Confidence
               </p>
               <p
-                className="text-xl font-bold"
+                className="text-xl font-outlier font-bold"
                 style={{
                   color: latest.is_registered ? "var(--color-safe)" : "var(--color-warn)",
-                  fontFamily: "var(--font-outlier)",
                 }}
               >
                 {(latest.confidence * 100).toFixed(1)}%
@@ -199,16 +187,15 @@ export default function Vehicles() {
       <section className="card-flush">
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
           <h2
-            className="text-sm font-semibold"
+            className="font-display font-semibold text-base"
             style={{ color: "var(--color-ink)" }}
           >
             Detection History Log
           </h2>
           <span
-            className="text-xs"
+            className="text-xs font-outlier"
             style={{
               color: "var(--color-muted)",
-              fontFamily: "var(--font-outlier)",
             }}
           >
             Showing last {detections.length} entries

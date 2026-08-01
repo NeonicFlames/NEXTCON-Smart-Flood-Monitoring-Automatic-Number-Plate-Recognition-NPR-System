@@ -1,8 +1,15 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import { AuthProvider } from "@/context/AuthContext";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NextCon: Smart Flood NPR",
+  title: "NextCon",
   description: "Real-time flood detection and vehicle monitoring for Universiti Malaysia Kelantan",
 };
 
@@ -27,19 +34,22 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <Header />
-            <main className="flex-1 p-6 lg:p-8">
-              {children}
-            </main>
+        <AuthProvider>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <div className="flex-1 flex flex-col min-w-0">
+              <Header />
+              <main className="flex-1 p-6 lg:p-8">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+

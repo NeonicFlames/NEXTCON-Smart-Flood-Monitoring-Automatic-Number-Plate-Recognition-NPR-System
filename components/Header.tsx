@@ -24,10 +24,9 @@ export default function Header() {
     >
       <div className="flex items-center gap-3">
         <h2
-          className="text-sm font-semibold tracking-tight"
+          className="font-display font-semibold text-base tracking-tight"
           style={{
             color: "var(--color-ink)",
-            fontFamily: "var(--font-display)",
           }}
         >
           {title}
@@ -35,7 +34,7 @@ export default function Header() {
       </div>
 
       <div
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium font-outlier"
         style={{
           background: "var(--color-safe-subtle)",
           color: "var(--color-safe)",
