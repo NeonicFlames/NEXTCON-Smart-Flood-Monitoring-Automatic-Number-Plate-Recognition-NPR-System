@@ -336,7 +336,7 @@ export default function Home() {
               style={{ color: "var(--color-ink)" }}
             >
               <Camera size={16} style={{ color: "var(--color-info)" }} />
-              <span>Camera Stream · Gate A</span>
+              <span>Camera Stream</span>
             </h2>
             <span
               className="text-xs font-outlier font-medium px-2 py-0.5 rounded"

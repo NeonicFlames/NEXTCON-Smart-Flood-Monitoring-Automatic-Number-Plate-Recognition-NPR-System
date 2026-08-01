@@ -119,7 +119,6 @@ export default function RegistrationPage() {
       );
     } catch (err) {
       console.error("Failed to toggle vehicle status:", err);
-      alert("Failed to update vehicle permit status. Please try again.");
     }
   };
 
@@ -430,11 +429,10 @@ export default function RegistrationPage() {
                             color: vehicle.is_active
                               ? "var(--color-safe)"
                               : "var(--color-warn)",
-                            border: `1px solid ${
-                              vehicle.is_active
+                            border: `1px solid ${vehicle.is_active
                                 ? "oklch(70% 0.18 145 / 0.2)"
                                 : "oklch(78% 0.18 85 / 0.2)"
-                            }`,
+                              }`,
                           }}
                         >
                           <span
