@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { AlertCircle, ShieldAlert, Check } from "lucide-react";
 import {
   getActiveFloodAlerts,
@@ -83,21 +84,21 @@ export default function Alerts() {
         return {
           bg: "var(--color-danger-subtle)",
           color: "var(--color-danger)",
-          border: "oklch(65% 0.22 25 / 0.3)",
+          border: "#5c2226",
           dot: "status-dot--danger",
         };
       case "WARNING":
         return {
           bg: "var(--color-warn-subtle)",
           color: "var(--color-warn)",
-          border: "oklch(78% 0.18 85 / 0.3)",
+          border: "#4d3a1a",
           dot: "status-dot--warn",
         };
       default:
         return {
           bg: "var(--color-safe-subtle)",
           color: "var(--color-safe)",
-          border: "oklch(70% 0.18 145 / 0.3)",
+          border: "#1d4a3a",
           dot: "status-dot--safe",
         };
     }
@@ -106,53 +107,30 @@ export default function Alerts() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
+      <PageHeader
+        icon={AlertCircle}
+        accent="danger"
+        title="Emergency Flood Alerts"
+        subtitle="Automated vehicle evacuation broadcasts and risk notifications"
+        actions={
           <div
-            className="icon-chip"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
             style={{
-              background: "var(--color-danger-subtle)",
-              color: "var(--color-danger)",
-              border: "1px solid oklch(66% 0.22 25 / 0.3)",
+              background: hasActiveAlerts ? "var(--color-danger-subtle)" : "var(--color-safe-subtle)",
+              color: hasActiveAlerts ? "var(--color-danger)" : "var(--color-safe)",
+              border: `1px solid ${hasActiveAlerts ? "#5c2226" : "#1d4a3a"}`,
+              fontFamily: "var(--font-outlier)",
             }}
           >
-            <AlertCircle size={22} />
+            <ShieldAlert size={14} />
+            <span>
+              {hasActiveAlerts
+                ? `Active Alert Level · ${status}`
+                : "No Active Alerts"}
+            </span>
           </div>
-          <div>
-            <h1
-              className="text-xl font-semibold tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Emergency Flood Alerts
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Automated vehicle evacuation broadcasts and risk notifications
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
-          style={{
-            background: hasActiveAlerts ? "var(--color-danger-subtle)" : "var(--color-safe-subtle)",
-            color: hasActiveAlerts ? "var(--color-danger)" : "var(--color-safe)",
-            border: `1px solid ${hasActiveAlerts ? "oklch(66% 0.22 25 / 0.3)" : "oklch(72% 0.18 145 / 0.3)"}`,
-            fontFamily: "var(--font-outlier)",
-            boxShadow: hasActiveAlerts ? "var(--shadow-glow-danger)" : "var(--shadow-glow-safe)",
-          }}
-        >
-          <ShieldAlert size={14} />
-          <span>
-            {hasActiveAlerts
-              ? `Active Alert Level · ${status}`
-              : "No Active Alerts"}
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Current Alert Panel */}
       {hasActiveAlerts && (
@@ -161,8 +139,7 @@ export default function Alerts() {
           style={{
             background: status === "DANGER" ? "var(--color-danger-subtle)" : "var(--color-warn-subtle)",
             borderLeft: `4px solid ${status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)"}`,
-            borderColor: status === "DANGER" ? "oklch(66% 0.22 25 / 0.3)" : "oklch(80% 0.18 85 / 0.3)",
-            boxShadow: status === "DANGER" ? "var(--shadow-glow-danger)" : "var(--shadow-glow-warn)",
+            borderColor: status === "DANGER" ? "#5c2226" : "#4d3a1a",
           }}
         >
           <div className="flex items-center justify-between">
@@ -182,7 +159,7 @@ export default function Alerts() {
                 background: "var(--color-paper-2)",
                 color: status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)",
                 fontFamily: "var(--font-outlier)",
-                border: `1px solid ${status === "DANGER" ? "oklch(66% 0.22 25 / 0.3)" : "oklch(80% 0.18 85 / 0.3)"}`,
+                border: `1px solid ${status === "DANGER" ? "#5c2226" : "#4d3a1a"}`,
               }}
             >
               BROADCAST ACTIVE

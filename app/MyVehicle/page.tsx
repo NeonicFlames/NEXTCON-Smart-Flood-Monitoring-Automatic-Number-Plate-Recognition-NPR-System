@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import {
   checkVehiclePermit,
   addRegisteredVehicle,
@@ -13,9 +14,8 @@ import {
   AlertCircle,
   PlusCircle,
   ShieldCheck,
-  Building2,
   Clock,
-  Sparkles
+  FilePlus2
 } from "lucide-react";
 
 interface PermitResult {
@@ -96,49 +96,32 @@ export default function MyVehiclePage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="icon-chip">
-            <Car size={22} />
-          </div>
-          <div>
-            <h1
-              className="text-xl font-semibold tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Vehicle Permit Lookup &amp; Registration
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Check your campus gate entry clearance or apply for vehicle registration
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            setShowRequestForm(!showRequestForm);
-            setSuccessMessage(false);
-          }}
-          className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer self-start sm:self-auto"
-        >
-          <PlusCircle size={16} />
-          <span>{showRequestForm ? "Close Form" : "Register My Vehicle"}</span>
-        </button>
-      </div>
+      <PageHeader
+        icon={Car}
+        title="Vehicle Permit Lookup & Registration"
+        subtitle="Check your campus gate entry clearance or apply for vehicle registration"
+        actions={
+          <button
+            onClick={() => {
+              setShowRequestForm(!showRequestForm);
+              setSuccessMessage(false);
+            }}
+            className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer self-start sm:self-auto"
+          >
+            <PlusCircle size={16} />
+            <span>{showRequestForm ? "Close Form" : "Register My Vehicle"}</span>
+          </button>
+        }
+      />
 
       {/* Success Notification */}
       {successMessage && (
         <div
-          className="p-4 rounded-xl border flex items-center gap-3 animate-in fade-in"
+          className="p-4 rounded-xl border flex items-center gap-3"
           style={{
             background: "var(--color-warn-subtle)",
-            borderColor: "oklch(80% 0.18 85 / 0.3)",
+            borderColor: "#4d3a1a",
             color: "var(--color-warn)",
-            boxShadow: "var(--shadow-glow-warn)",
           }}
         >
           <Clock size={20} className="shrink-0" />
@@ -217,7 +200,7 @@ export default function MyVehiclePage() {
                 className="p-4 rounded-xl border flex items-center gap-3 text-xs"
                 style={{
                   background: "var(--color-warn-subtle)",
-                  borderColor: "oklch(80% 0.18 85 / 0.3)",
+                  borderColor: "#4d3a1a",
                   color: "var(--color-warn)",
                 }}
               >
@@ -243,7 +226,7 @@ export default function MyVehiclePage() {
                       PERMIT VERIFICATION MATCH
                     </span>
                     <h3
-                      className="text-3xl font-extrabold tracking-wider mt-1 gradient-text glow-text"
+                      className="text-3xl font-extrabold tracking-wider mt-1"
                       style={{
                         color: "var(--color-accent)",
                         fontFamily: "var(--font-outlier)",
@@ -263,8 +246,8 @@ export default function MyVehiclePage() {
                         ? "var(--color-safe)"
                         : "var(--color-warn)",
                       border: `1px solid ${searchResult.is_active
-                          ? "oklch(72% 0.18 145 / 0.3)"
-                          : "oklch(80% 0.18 85 / 0.3)"
+                          ? "#1d4a3a"
+                          : "#4d3a1a"
                         }`,
                     }}
                   >
@@ -294,7 +277,7 @@ export default function MyVehiclePage() {
       {/* Registration Request Form */}
       {showRequestForm && (
         <section
-          className="p-6 rounded-2xl border space-y-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-200"
+          className="p-6 rounded-2xl border space-y-6"
           style={{
             background: "var(--color-paper-2)",
             borderColor: "var(--color-rule)",
@@ -302,7 +285,7 @@ export default function MyVehiclePage() {
           }}
         >
           <div className="flex items-center gap-2">
-            <Sparkles size={20} style={{ color: "var(--color-accent)" }} />
+            <FilePlus2 size={20} style={{ color: "var(--color-accent)" }} />
             <h2
               className="text-base font-semibold"
               style={{ color: "var(--color-ink)", fontFamily: "var(--font-display)" }}
@@ -419,7 +402,7 @@ export default function MyVehiclePage() {
               <button
                 type="button"
                 onClick={() => setShowRequestForm(false)}
-                className="px-4 py-2 font-medium rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                className="px-4 py-2 font-medium rounded-md text-neutral hover:bg-white/10 cursor-pointer"
               >
                 Cancel
               </button>

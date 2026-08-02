@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminGuard from "@/components/AdminGuard";
+import PageHeader from "@/components/PageHeader";
 import {
   getRegisteredVehicles,
   addRegisteredVehicle,
@@ -19,7 +20,6 @@ import {
   AlertTriangle,
   UserCheck,
   ShieldCheck,
-  Building2,
   RefreshCw,
   Phone,
   Mail
@@ -144,58 +144,39 @@ export default function RegistrationPage() {
     <AdminGuard>
       <div className="space-y-8">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="icon-chip">
-              <Car size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1
-                  className="text-xl font-semibold tracking-tight"
-                  style={{
-                    color: "var(--color-ink)",
-                    fontFamily: "var(--font-display)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  Vehicle Permit Registry
-                </h1>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase"
-                  style={{
-                    background: "var(--color-accent-subtle)",
-                    color: "var(--color-accent)",
-                    border: "1px solid oklch(66% 0.20 250 / 0.25)",
-                  }}
-                >
-                  Admin Control
-                </span>
-              </div>
-              <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-                Add, authorize, inspect, and remove registered vehicle permits
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              onClick={loadData}
-              className="btn-ghost p-2 text-xs font-medium flex items-center gap-1.5 cursor-pointer"
-              title="Refresh Registry"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            </button>
-
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>Register New Vehicle</span>
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          icon={Car}
+          title="Vehicle Permit Registry"
+          subtitle="Add, authorize, inspect, and remove registered vehicle permits"
+          actions={
+            <>
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase self-center"
+                style={{
+                  background: "var(--color-accent-subtle)",
+                  color: "var(--color-accent)",
+                  border: "1px solid #2b4a75",
+                }}
+              >
+                Admin Control
+              </span>
+              <button
+                onClick={loadData}
+                className="btn-ghost p-2 text-xs font-medium flex items-center gap-1.5 cursor-pointer"
+                title="Refresh Registry"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              </button>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Register New Vehicle</span>
+              </button>
+            </>
+          }
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -415,8 +396,8 @@ export default function RegistrationPage() {
                               ? "var(--color-safe)"
                               : "var(--color-warn)",
                             border: `1px solid ${vehicle.is_active
-                              ? "oklch(72% 0.18 145 / 0.25)"
-                              : "oklch(80% 0.18 85 / 0.25)"
+                              ? "#1d4a3a"
+                              : "#4d3a1a"
                               }`,
                           }}
                         >
@@ -438,7 +419,7 @@ export default function RegistrationPage() {
                           {!vehicle.is_active && (
                             <button
                               onClick={() => handleToggleStatus(vehicle)}
-                              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-1 cursor-pointer"
                               title="Approve and activate this permit"
                             >
                               <CheckCircle2 size={13} />
@@ -447,7 +428,7 @@ export default function RegistrationPage() {
                           )}
                           <button
                             onClick={() => setDeleteConfirmId(vehicle.id)}
-                            className="p-1.5 rounded-md hover:bg-rose-500/10 text-rose-600 transition cursor-pointer"
+                            className="p-1.5 rounded-md hover:bg-rose-500/20 text-rose-400 transition cursor-pointer"
                             title="Remove vehicle permit"
                           >
                             <Trash2 size={16} />
@@ -465,9 +446,9 @@ export default function RegistrationPage() {
 
         {/* Modal: Add Vehicle */}
         {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
             <div
-              className="w-full max-w-lg p-6 rounded-2xl border shadow-2xl space-y-5"
+              className="w-full max-w-lg p-6 rounded-2xl border space-y-5"
               style={{
                 background: "var(--color-paper-2)",
                 borderColor: "var(--color-rule)",
@@ -479,9 +460,9 @@ export default function RegistrationPage() {
                   <div
                     className="p-2 rounded-lg"
                     style={{
-                      background: "var(--gradient-accent-soft)",
+                      background: "var(--color-accent-subtle)",
                       color: "var(--color-accent)",
-                      border: "1px solid oklch(66% 0.20 250 / 0.25)",
+                      border: "1px solid #2b4a75",
                     }}
                   >
                     <Car size={20} />
@@ -495,7 +476,7 @@ export default function RegistrationPage() {
                 </div>
                 <button
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                  className="p-1.5 rounded-md text-neutral hover:bg-white/10 cursor-pointer"
                 >
                   <XCircle size={18} />
                 </button>
@@ -610,7 +591,7 @@ export default function RegistrationPage() {
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                    className="px-4 py-2 font-medium rounded-md hover:bg-white/10 cursor-pointer"
                     style={{ color: "var(--color-neutral)" }}
                   >
                     Cancel
@@ -630,9 +611,9 @@ export default function RegistrationPage() {
 
         {/* Modal: Delete Confirmation */}
         {deleteConfirmId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
             <div
-              className="w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-4"
+              className="w-full max-w-md p-6 rounded-2xl border space-y-4"
               style={{
                 background: "var(--color-paper-2)",
                 borderColor: "var(--color-rule)",
@@ -640,7 +621,7 @@ export default function RegistrationPage() {
               }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-rose-500/10 text-rose-600">
+                <div className="p-3 rounded-lg bg-rose-500/10 text-rose-400">
                   <AlertTriangle size={24} />
                 </div>
                 <div>
@@ -656,13 +637,13 @@ export default function RegistrationPage() {
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   onClick={() => setDeleteConfirmId(null)}
-                  className="px-4 py-2 text-xs font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-neutral cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium rounded-md hover:bg-white/10 text-neutral cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDelete(deleteConfirmId)}
-                  className="px-4 py-2 text-xs font-semibold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold rounded-md bg-rose-600 hover:bg-rose-500 text-white shadow cursor-pointer"
                 >
                   Confirm Delete
                 </button>

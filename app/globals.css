@@ -18,7 +18,7 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-body);
-  line-height: 1.55;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -30,7 +30,7 @@ h3,
 h4,
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   font-style: normal;
 }
 
@@ -60,14 +60,14 @@ h3 {
 .text-category {
   font-family: var(--font-outlier);
   font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .plate-number {
   font-family: var(--font-outlier);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
 }
 
@@ -120,24 +120,22 @@ table,
 .card {
   background: var(--color-paper-2);
   border: 1px solid var(--color-rule);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   padding: var(--space-lg);
   box-shadow: var(--shadow-card);
-  transition: transform var(--dur-short) var(--ease-out),
-    box-shadow var(--dur-short) var(--ease-out),
+  transition: box-shadow var(--dur-short) var(--ease-out),
     border-color var(--dur-short) var(--ease-out);
 }
 
 .card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
-  border-color: oklch(38% 0.02 255);
+  border-color: #3a4a66;
 }
 
 .card-flush {
   background: var(--color-paper-2);
   border: 1px solid var(--color-rule);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: box-shadow var(--dur-short) var(--ease-out),
@@ -146,69 +144,44 @@ table,
 
 .card-flush:hover {
   box-shadow: var(--shadow-card-hover);
-  border-color: oklch(38% 0.02 255);
+  border-color: #3a4a66;
 }
 
-/* ── Glass panel ── */
-.glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-radius: var(--radius-xl);
-}
-
-/* ── Gradient text ── */
-.gradient-text {
-  background: var(--gradient-accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-/* ── Glow text ── */
-.glow-text {
-  text-shadow: 0 0 20px oklch(66% 0.20 250 / 0.5);
-}
-
-/* ── Premium primary button ── */
+/* ── Primary button ── */
 .btn-primary {
-  background: var(--gradient-accent);
+  background: var(--color-accent);
   color: #ffffff;
   border: none;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px -4px oklch(66% 0.20 250 / 0.5);
-  transition: transform var(--dur-micro) var(--ease-out),
-    box-shadow var(--dur-micro) var(--ease-out),
-    filter var(--dur-micro) var(--ease-out);
+  transition: background var(--dur-micro) var(--ease-out);
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px -4px oklch(66% 0.20 250 / 0.6);
-  filter: brightness(1.05);
+  background: var(--color-accent-2);
 }
 
 .btn-primary:active {
-  transform: translateY(0);
+  background: var(--color-accent-2);
 }
 
-/* ── Premium ghost/secondary button ── */
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Ghost/secondary button ── */
 .btn-ghost {
-  background: var(--color-paper-3);
+  background: var(--color-paper-2);
   color: var(--color-ink);
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-md);
   transition: background var(--dur-micro) var(--ease-out),
-    border-color var(--dur-micro) var(--ease-out),
-    transform var(--dur-micro) var(--ease-out);
+    border-color var(--dur-micro) var(--ease-out);
 }
 
 .btn-ghost:hover {
-  background: var(--color-paper-4);
-  border-color: oklch(38% 0.02 255);
-  transform: translateY(-1px);
+  background: var(--color-paper-3);
+  border-color: #3a4a66;
 }
 
 /* ── Status badge ── */
@@ -230,7 +203,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: oklch(22% 0.016 255 / 0.5);
+  background: var(--color-paper-3);
 }
 
 /* ── Icon chip ── */
@@ -241,10 +214,9 @@ tbody tr:hover {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: var(--radius-lg);
-  background: var(--gradient-accent-soft);
-  border: 1px solid oklch(66% 0.20 250 / 0.25);
+  background: var(--color-accent-subtle);
+  border: 1px solid #2b4a75;
   color: var(--color-accent);
-  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.06);
 }
 
 /* ── Status dot ── */
@@ -257,43 +229,12 @@ tbody tr:hover {
 
 .status-dot--safe {
   background: var(--color-safe);
-  box-shadow: 0 0 8px oklch(72% 0.18 145 / 0.6);
 }
 
 .status-dot--warn {
   background: var(--color-warn);
-  box-shadow: 0 0 8px oklch(80% 0.18 85 / 0.6);
 }
 
 .status-dot--danger {
   background: var(--color-danger);
-  box-shadow: 0 0 8px oklch(66% 0.22 25 / 0.6);
-  animation: pulse-status 2s var(--ease-in-out) infinite;
-}
-
-@keyframes pulse-status {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
-}
-
-/* ── Page load stagger ── */
-.reveal {
-  opacity: 0;
-  transform: translateY(6px);
-  animation: reveal var(--dur-long) var(--ease-out) forwards;
-  animation-delay: calc(var(--i, 0) * 60ms);
-}
-
-@keyframes reveal {
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }

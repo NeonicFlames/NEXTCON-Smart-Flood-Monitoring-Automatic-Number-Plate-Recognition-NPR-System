@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import { Waves, AlertTriangle, ShieldAlert, Activity } from "lucide-react";
 import { getLatestReading, subscribeToFloodReadings } from "@/lib/queries/flood";
 import { getSettings } from "@/lib/queries/settings";
@@ -61,10 +62,10 @@ export default function Flood() {
 
   const bannerBorder =
     status === "DANGER"
-      ? "oklch(65% 0.22 25 / 0.3)"
+      ? "#5c2226"
       : status === "WARNING"
-      ? "oklch(78% 0.18 85 / 0.3)"
-      : "oklch(70% 0.18 145 / 0.3)";
+      ? "#4d3a1a"
+      : "#1d4a3a";
 
   const bannerLabel =
     status === "DANGER"
@@ -90,42 +91,25 @@ export default function Flood() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="icon-chip">
-            <Waves size={22} />
+      <PageHeader
+        icon={Waves}
+        title="Flood Water Level Monitoring"
+        subtitle="Ultrasonic telemetry and automated water rise detection"
+        actions={
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
+            style={{
+              background: "var(--color-paper-2)",
+              color: "var(--color-neutral)",
+              border: "1px solid var(--color-rule)",
+              fontFamily: "var(--font-outlier)",
+            }}
+          >
+            <Activity size={14} style={{ color: "var(--color-safe)" }} />
+            <span>Telemetry Polling · 5s</span>
           </div>
-          <div>
-            <h1
-              className="text-xl font-semibold tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Flood Water Level Monitoring
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Ultrasonic telemetry and automated water rise detection
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
-          style={{
-            background: "var(--color-paper-2)",
-            color: "var(--color-neutral)",
-            border: "1px solid var(--color-rule)",
-            fontFamily: "var(--font-outlier)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          <Activity size={14} style={{ color: "var(--color-safe)" }} />
-          <span>Telemetry Polling · 5s</span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Primary Telemetry Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -178,16 +162,11 @@ export default function Flood() {
         style={{
           background: bannerBg,
           border: `1px solid ${bannerBorder}`,
-          boxShadow: status === "DANGER"
-            ? "var(--shadow-glow-danger)"
-            : status === "WARNING"
-              ? "var(--shadow-glow-warn)"
-              : "var(--shadow-glow-safe)",
         }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full" style={{ background: statusColor, boxShadow: `0 0 12px ${statusColor}` }} />
+            <span className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
             <h2
               className="text-lg font-bold"
               style={{ color: statusColor }}
@@ -228,8 +207,7 @@ export default function Flood() {
             style={{
               background: "var(--color-warn-subtle)",
               borderLeft: "3px solid var(--color-warn)",
-              border: "1px solid oklch(80% 0.18 85 / 0.2)",
-              boxShadow: "var(--shadow-card)",
+              border: "1px solid #4d3a1a",
             }}
           >
             <div className="flex items-center gap-2">
@@ -258,8 +236,7 @@ export default function Flood() {
             style={{
               background: "var(--color-danger-subtle)",
               borderLeft: "3px solid var(--color-danger)",
-              border: "1px solid oklch(66% 0.22 25 / 0.2)",
-              boxShadow: "var(--shadow-card)",
+              border: "1px solid #5c2226",
             }}
           >
             <div className="flex items-center gap-2">

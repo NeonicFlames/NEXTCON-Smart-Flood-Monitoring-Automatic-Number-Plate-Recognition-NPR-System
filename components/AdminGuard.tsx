@@ -32,12 +32,13 @@ export function AdminPasscodeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div
-        className="w-full max-w-md p-6 rounded-xl shadow-2xl border flex flex-col gap-5"
+        className="w-full max-w-md p-6 rounded-xl border flex flex-col gap-5"
         style={{
           background: "var(--color-paper-2)",
           borderColor: "var(--color-rule)",
+          boxShadow: "var(--shadow-pop)",
         }}
       >
         <div className="flex items-center gap-3">
@@ -46,7 +47,7 @@ export function AdminPasscodeModal({
             style={{
               background: "var(--color-accent-subtle)",
               color: "var(--color-accent)",
-              border: "1px solid var(--color-rule)",
+              border: "1px solid #2b4a75",
             }}
           >
             <KeyRound size={24} />
@@ -106,7 +107,7 @@ export function AdminPasscodeModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition"
+                className="px-4 py-2 text-xs font-medium rounded-md hover:bg-white/10 transition"
                 style={{ color: "var(--color-neutral)" }}
               >
                 Cancel
@@ -114,7 +115,7 @@ export function AdminPasscodeModal({
             )}
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md shadow transition"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition"
               style={{
                 background: "var(--color-accent)",
                 color: "#ffffff",

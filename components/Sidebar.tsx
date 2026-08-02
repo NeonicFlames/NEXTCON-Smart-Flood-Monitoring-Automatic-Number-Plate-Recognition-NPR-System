@@ -48,9 +48,8 @@ export default function Sidebar() {
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{
-              background: "var(--gradient-accent)",
+              background: "var(--color-accent)",
               color: "#ffffff",
-              boxShadow: "var(--shadow-glow-accent)",
             }}
           >
             <Shield size={20} />
@@ -70,7 +69,7 @@ export default function Sidebar() {
                 color: "var(--color-neutral)",
               }}
             >
-              SMART FLOOD DETECTION
+              Flood Detection
             </p>
           </div>
         </div>
@@ -80,7 +79,7 @@ export default function Sidebar() {
           <p className="px-3 mb-2 text-category">
             User Portal
           </p>
-          <nav className="space-y-1.5">
+          <nav className="space-y-1">
             {userNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -88,30 +87,20 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                  className="group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
                   style={{
                     background: isActive
-                      ? "var(--gradient-accent-soft)"
+                      ? "var(--color-accent-subtle)"
                       : "transparent",
                     color: isActive
                       ? "var(--color-accent)"
                       : "var(--color-neutral)",
-                    border: isActive
-                      ? "1px solid oklch(66% 0.20 250 / 0.25)"
-                      : "1px solid transparent",
-                    boxShadow: isActive ? "var(--shadow-glow-accent)" : "none",
                   }}
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon size={17} strokeWidth={isActive ? 2 : 1.5} />
                     <span>{item.name}</span>
                   </div>
-                  {isActive && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: "var(--color-accent)" }}
-                    />
-                  )}
                 </Link>
               );
             })}
@@ -126,18 +115,18 @@ export default function Sidebar() {
             </p>
             {isAdmin ? (
               <span
-                className="text-[11px] font-semibold px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1 font-outlier"
+                className="text-[11px] font-semibold px-1.5 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1 font-outlier"
               >
                 <UserCheck size={10} /> Active
               </span>
             ) : (
-              <span className="text-[11px] font-semibold text-amber-600 flex items-center gap-1 font-outlier">
+              <span className="text-[11px] font-semibold text-amber-400 flex items-center gap-1 font-outlier">
                 <Lock size={10} /> Protected
               </span>
             )}
           </div>
 
-          <nav className="space-y-1.5">
+          <nav className="space-y-1">
             {adminNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -145,18 +134,14 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                  className="group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
                   style={{
                     background: isActive
-                      ? "var(--gradient-accent-soft)"
+                      ? "var(--color-accent-subtle)"
                       : "transparent",
                     color: isActive
                       ? "var(--color-accent)"
                       : "var(--color-neutral)",
-                    border: isActive
-                      ? "1px solid oklch(66% 0.20 250 / 0.25)"
-                      : "1px solid transparent",
-                    boxShadow: isActive ? "var(--shadow-glow-accent)" : "none",
                   }}
                 >
                   <div className="flex items-center gap-2.5">
@@ -169,7 +154,6 @@ export default function Sidebar() {
                       style={{
                         background: "var(--color-paper-4)",
                         color: "var(--color-accent)",
-                        border: "1px solid oklch(66% 0.20 250 / 0.25)",
                       }}
                     >
                       {item.badge}
@@ -193,13 +177,13 @@ export default function Sidebar() {
         {isAdmin ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-semibold text-emerald-600">Admin Unlocked</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-semibold text-emerald-400">Admin Unlocked</span>
             </div>
             <button
               onClick={logout}
               title="Lock Admin Access"
-              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 text-xs transition cursor-pointer"
+              className="p-1 rounded hover:bg-white/10 text-xs transition cursor-pointer"
               style={{ color: "var(--color-danger)" }}
             >
               <LogOut size={14} />
@@ -221,7 +205,7 @@ export default function Sidebar() {
 
         <div className="mt-3 pt-3 border-t" style={{ borderColor: "var(--color-rule)" }}>
           <p className="font-medium text-xs font-outlier" style={{ color: "var(--color-neutral)" }}>
-            NextCon System v1.0
+            Flood NPR System v1.0
           </p>
           <p className="mt-0.5 text-[11px] font-outlier" style={{ color: "var(--color-muted)" }}>
             Universiti Malaysia Kelantan

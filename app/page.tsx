@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import WaterChart from "@/components/WaterChart";
-import { LayoutDashboard, Camera, ShieldCheck } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import { LayoutDashboard, Camera, Activity } from "lucide-react";
 import { getLatestReading } from "@/lib/queries/flood";
 import { getRecentDetections, getTodayCount } from "@/lib/queries/vehicles";
 import { subscribeToFloodReadings } from "@/lib/queries/flood";
@@ -78,34 +79,24 @@ export default function Home() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
+      <PageHeader
+        icon={LayoutDashboard}
+        title="Smart Flood & Vehicle Telemetry"
+        subtitle="Real-time environmental monitoring & automatic plate recognition"
+        actions={
           <div
-            className="p-2.5 rounded-lg shrink-0"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-outlier"
             style={{
               background: "var(--color-paper-2)",
-              color: "var(--color-accent)",
+              color: "var(--color-neutral)",
               border: "1px solid var(--color-rule)",
             }}
           >
-            <LayoutDashboard size={22} />
+            <Activity size={14} style={{ color: "var(--color-safe)" }} />
+            <span>Live · Updated {updatedAgo}</span>
           </div>
-          <div>
-            <h1
-              className="font-display font-bold text-xl tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-              }}
-            >
-              Smart Flood &amp; Vehicle Telemetry
-            </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Real-time environmental monitoring &amp; automatic plate recognition
-            </p>
-          </div>
-        </div>
-
-      </div>
+        }
+      />
 
       {/* Primary Metrics */}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -127,7 +118,7 @@ export default function Home() {
             Flood Condition
           </p>
           <p
-            className="text-2xl font-display font-bold mt-1 flex items-center gap-2"
+            className="text-lg font-display font-semibold mt-1 flex items-center gap-2"
             style={{ color: statusColor }}
           >
             <span className={`status-dot ${statusDot}`} />
@@ -140,9 +131,9 @@ export default function Home() {
             Water Depth
           </p>
           <p
-            className="text-2xl font-outlier font-bold mt-1"
+            className="text-lg font-outlier font-bold mt-1"
             style={{
-              color: "var(--color-info)",
+              color: statusColor,
               fontVariantNumeric: "tabular-nums",
             }}
           >
@@ -155,7 +146,7 @@ export default function Home() {
             Detections Today
           </p>
           <p
-            className="text-2xl font-outlier font-bold mt-1"
+            className="text-lg font-outlier font-bold mt-1"
             style={{
               color: "var(--color-ink)",
               fontVariantNumeric: "tabular-nums",
@@ -170,7 +161,7 @@ export default function Home() {
             Latest Detection
           </p>
           <p
-            className="text-2xl plate-number mt-1"
+            className="text-lg plate-number mt-1"
             style={{
               color: "var(--color-accent)",
             }}
@@ -285,8 +276,8 @@ export default function Home() {
                           ? "var(--color-safe)"
                           : "var(--color-warn)",
                         border: `1px solid ${d.is_registered
-                          ? "oklch(70% 0.18 145 / 0.2)"
-                          : "oklch(78% 0.18 85 / 0.2)"
+                          ? "#1d4a3a"
+                          : "#4d3a1a"
                           }`,
                       }}
                     >
@@ -318,13 +309,6 @@ export default function Home() {
             >
               Water Level History
             </h2>
-            <span
-              className="text-xs font-outlier"
-              style={{
-                color: "var(--color-neutral)",
-              }}
-            >
-            </span>
           </div>
           <WaterChart />
         </section>

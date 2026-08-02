@@ -1,62 +1,62 @@
-/* Hallmark · genre: modern-minimal · theme: Cobalt (Dark) · tone: utilitarian
- * macrostructure: Workbench (dashboard) · nav: N3 side-rail · footer: none
- * pre-emit critique: P5 H5 E5 S5 R5 V5
+/* Flood NPR · professional dark-mode design system
+ * Deep slate, high contrast, restrained. Inter typography, single blue accent,
+ * subtle shadows, no gradients, no glow, no glass. OLED-friendly.
  */
 
 :root {
-  /* ── Paper (surfaces: higher elevation = lighter in dark mode) ── */
-  --color-paper:    oklch(13% 0.012 255);   /* deep midnight background */
-  --color-paper-2:  oklch(17% 0.014 255);   /* card surface */
-  --color-paper-3:  oklch(22% 0.016 255);   /* hover/active surface & wells */
-  --color-paper-4:  oklch(27% 0.018 255);   /* elevated wells / chips */
+  /* ── Paper (surfaces) ── */
+  --color-paper:    #0b0f1a;   /* app background (deep slate / near-black) */
+  --color-paper-2:  #111827;   /* card surface */
+  --color-paper-3:  #1a2234;   /* wells / hover surface */
+  --color-paper-4:  #232c40;   /* elevated wells / chips */
 
   /* ── Ink (text) ── */
-  --color-ink:      oklch(96% 0.006 255);   /* primary text (near-white) */
-  --color-ink-2:    oklch(84% 0.010 255);   /* secondary text */
+  --color-ink:      #f3f4f6;   /* primary text (near-white) */
+  --color-ink-2:    #d1d5db;   /* secondary text */
 
   /* ── Neutrals ── */
-  --color-rule:     oklch(30% 0.012 255);   /* hairline borders */
-  --color-neutral:  oklch(70% 0.010 255);   /* label/caption text */
-  --color-muted:    oklch(54% 0.008 255);   /* tertiary text */
+  --color-rule:     #2a3448;   /* hairline borders */
+  --color-neutral:  #9ca3af;   /* label/caption text */
+  --color-muted:    #6b7280;   /* tertiary text */
 
-  /* ── Accent (electric cobalt → cyan gradient) ── */
-  --color-accent:   oklch(66% 0.20 250);   /* vibrant electric cobalt blue */
-  --color-accent-2: oklch(72% 0.16 235);   /* cyan-blue secondary accent */
-  --color-accent-subtle: oklch(24% 0.06 250); /* subtle active background fill */
-  --gradient-accent: linear-gradient(135deg, oklch(66% 0.20 250), oklch(72% 0.16 235));
-  --gradient-accent-soft: linear-gradient(135deg, oklch(66% 0.20 250 / 0.16), oklch(72% 0.16 235 / 0.10));
+  /* ── Accent (single blue, brightened for dark) ── */
+  --color-accent:   #3b82f6;
+  --color-accent-2: #2563eb;
+  --color-accent-subtle: #1e3a5f;
+  --gradient-accent: linear-gradient(135deg, #3b82f6, #2563eb);
+  --gradient-accent-soft: linear-gradient(135deg, #1e3a5f, #1e3a5f);
 
   /* ── Focus ── */
-  --color-focus:    oklch(66% 0.20 250);
+  --color-focus:    #60a5fa;
 
-  /* ── Semantic status (vibrant for dark mode) ── */
-  --color-safe:     oklch(72% 0.18 145);   /* luminous green */
-  --color-safe-subtle: oklch(22% 0.05 145);
-  --color-warn:     oklch(80% 0.18 85);    /* luminous amber */
-  --color-warn-subtle: oklch(24% 0.05 85);
-  --color-danger:   oklch(66% 0.22 25);    /* luminous danger red */
-  --color-danger-subtle: oklch(22% 0.06 25);
-  --color-info:     oklch(72% 0.16 245);   /* luminous cyan-blue */
-  --color-info-subtle: oklch(22% 0.05 245);
+  /* ── Semantic status (brightened for dark) ── */
+  --color-safe:     #34d399;
+  --color-safe-subtle: #0f2e22;
+  --color-warn:     #fbbf24;
+  --color-warn-subtle: #33260f;
+  --color-danger:   #f87171;
+  --color-danger-subtle: #3a1416;
+  --color-info:     #60a5fa;
+  --color-info-subtle: #1e3a5f;
 
-  /* ── Typography (Space Grotesk + Geist Sans + Geist Mono) ── */
-  --font-display:   var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-body:      var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-outlier:   var(--font-geist-mono), ui-monospace, "Cascadia Code", monospace;
+  /* ── Typography (Inter + Geist Mono) ── */
+  --font-display:   var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body:      var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-outlier:   var(--font-geist-mono), ui-monospace, "SF Mono", "Cascadia Code", monospace;
 
-  /* ── Type scale (Major Third / Technical 1.25) ── */
-  --text-2xs:       0.75rem;     /* 12px - uppercase category badges & tracking labels */
-  --text-xs:        0.8125rem;   /* 13px - secondary metadata, captions & hints */
-  --text-sm:        0.875rem;    /* 14px - table data, controls & dense UI */
-  --text-base:      1rem;        /* 16px - body prose & form inputs */
-  --text-md:        1.125rem;    /* 18px - lead text & card section headers */
-  --text-lg:        1.375rem;    /* 22px - major section titles & modal headers */
-  --text-xl:        1.75rem;     /* 28px - page headers & key telemetry callouts */
-  --text-2xl:       2.25rem;     /* 36px - primary metric values */
-  --text-3xl:       3rem;        /* 48px - major KPI figures */
+  /* ── Type scale ── */
+  --text-2xs:       0.75rem;
+  --text-xs:        0.8125rem;
+  --text-sm:        0.875rem;
+  --text-base:      1rem;
+  --text-md:        1.125rem;
+  --text-lg:        1.375rem;
+  --text-xl:        1.75rem;
+  --text-2xl:       2.25rem;
+  --text-3xl:       3rem;
   --text-display:   clamp(2.25rem, 4.5vw + 1rem, 4.25rem);
 
-  /* ── Spacing (4pt base, more spacious) ── */
+  /* ── Spacing (4pt base) ── */
   --space-3xs:      0.125rem;
   --space-2xs:      0.25rem;
   --space-xs:       0.5rem;
@@ -77,28 +77,28 @@
   --radius-full:    9999px;
 
   /* ── Easings ── */
-  --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in:        cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-in-out:    cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out:       cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-in:        cubic-bezier(0.42, 0, 1, 1);
+  --ease-in-out:    cubic-bezier(0.42, 0, 0.58, 1);
 
   /* ── Durations ── */
   --dur-micro:      120ms;
-  --dur-short:      220ms;
-  --dur-long:       420ms;
+  --dur-short:      200ms;
+  --dur-long:       300ms;
 
-  /* ── Depth (layered premium shadows) ── */
-  --shadow-whisper: 0 1px 3px oklch(0% 0 0 / 0.3);
-  --shadow-card:    0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px -12px oklch(0% 0 0 / 0.5), 0 0 0 1px oklch(30% 0.012 255);
-  --shadow-card-hover: 0 2px 4px oklch(0% 0 0 / 0.3), 0 16px 40px -16px oklch(0% 0 0 / 0.6), 0 0 0 1px oklch(38% 0.02 255);
-  --shadow-pop:     0 4px 12px oklch(0% 0 0 / 0.4), 0 24px 60px -20px oklch(0% 0 0 / 0.7);
-  --shadow-glow-accent: 0 0 0 1px oklch(66% 0.20 250 / 0.35), 0 0 24px -4px oklch(66% 0.20 250 / 0.45);
-  --shadow-glow-safe: 0 0 0 1px oklch(72% 0.18 145 / 0.3), 0 0 20px -4px oklch(72% 0.18 145 / 0.4);
-  --shadow-glow-warn: 0 0 0 1px oklch(80% 0.18 85 / 0.3), 0 0 20px -4px oklch(80% 0.18 85 / 0.4);
-  --shadow-glow-danger: 0 0 0 1px oklch(66% 0.22 25 / 0.35), 0 0 24px -4px oklch(66% 0.22 25 / 0.5);
+  /* ── Depth (subtle, no glow) ── */
+  --shadow-whisper: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-pop:     0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow-accent: 0 0 0 1px rgba(59, 130, 246, 0.35);
+  --shadow-glow-safe: 0 0 0 1px rgba(52, 211, 153, 0.35);
+  --shadow-glow-warn: 0 0 0 1px rgba(251, 191, 36, 0.35);
+  --shadow-glow-danger: 0 0 0 1px rgba(248, 113, 113, 0.35);
 
-  /* ── Glass ── */
-  --glass-bg:       oklch(20% 0.02 255 / 0.6);
-  --glass-border:   oklch(100% 0 0 / 0.08);
+  /* ── Glass (unused, kept for compatibility) ── */
+  --glass-bg:       rgba(17, 24, 39, 0.8);
+  --glass-border:   rgba(255, 255, 255, 0.08);
   --glass-blur:     16px;
 
   /* ── Z-index ── */

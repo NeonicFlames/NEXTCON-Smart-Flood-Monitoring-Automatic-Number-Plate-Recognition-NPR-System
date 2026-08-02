@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import {
   Settings as SettingsIcon,
   Waves,
@@ -65,42 +66,25 @@ export default function Settings() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="icon-chip">
-            <SettingsIcon size={22} />
+      <PageHeader
+        icon={SettingsIcon}
+        title="System Configuration & Hardware"
+        subtitle="Manage sensor thresholds, camera feeds, and alert notifications"
+        actions={
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
+            style={{
+              background: "var(--color-paper-2)",
+              color: "var(--color-neutral)",
+              border: "1px solid var(--color-rule)",
+              fontFamily: "var(--font-outlier)",
+            }}
+          >
+            <Sliders size={14} style={{ color: "var(--color-accent)" }} />
+            <span>Config Profile · UMK-Default</span>
           </div>
-          <div>
-            <h1
-              className="text-xl font-semibold tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              System Configuration &amp; Hardware
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Manage sensor thresholds, camera feeds, and alert notifications
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
-          style={{
-            background: "var(--color-paper-2)",
-            color: "var(--color-neutral)",
-            border: "1px solid var(--color-rule)",
-            fontFamily: "var(--font-outlier)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          <Sliders size={14} style={{ color: "var(--color-accent)" }} />
-          <span>Config Profile · UMK-Default</span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Threshold Configuration */}
       <section className="card">
@@ -272,7 +256,7 @@ export default function Settings() {
               style={{
                 background: telegramEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
                 color: telegramEnabled ? "var(--color-safe)" : "var(--color-muted)",
-                border: telegramEnabled ? "1px solid oklch(72% 0.18 145 / 0.25)" : "1px solid var(--color-rule)",
+                border: telegramEnabled ? "1px solid #1d4a3a" : "1px solid var(--color-rule)",
               }}
             >
               {telegramEnabled ? "ON" : "OFF"}
@@ -292,7 +276,7 @@ export default function Settings() {
               style={{
                 background: pushEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
                 color: pushEnabled ? "var(--color-safe)" : "var(--color-muted)",
-                border: pushEnabled ? "1px solid oklch(72% 0.18 145 / 0.25)" : "1px solid var(--color-rule)",
+                border: pushEnabled ? "1px solid #1d4a3a" : "1px solid var(--color-rule)",
               }}
             >
               {pushEnabled ? "ON" : "OFF"}

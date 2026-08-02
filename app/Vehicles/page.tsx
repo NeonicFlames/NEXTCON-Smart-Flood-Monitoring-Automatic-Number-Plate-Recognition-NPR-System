@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Car, Camera, CheckCircle2 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import { Car, CheckCircle2 } from "lucide-react";
 import { getRecentDetections, getTodayCount, subscribeToDetections } from "@/lib/queries/vehicles";
 
 interface Detection {
@@ -43,28 +44,11 @@ export default function Vehicles() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="icon-chip">
-            <Car size={22} />
-          </div>
-          <div>
-            <h1
-              className="font-display font-bold text-xl tracking-tight"
-              style={{
-                color: "var(--color-ink)",
-              }}
-            >
-              Automatic Number Plate Recognition (ANPR)
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
-              Automated vehicle license plate extraction and verification
-            </p>
-          </div>
-        </div>
-
-      </div>
-
+      <PageHeader
+        icon={Car}
+        title="Automatic Number Plate Recognition (ANPR)"
+        subtitle="Automated vehicle license plate extraction and verification"
+      />
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -126,7 +110,7 @@ export default function Vehicles() {
               LATEST EXTRACTION
             </span>
             <h2
-              className="text-4xl plate-number mt-3 gradient-text glow-text"
+              className="text-4xl plate-number mt-3"
               style={{
                 color: "var(--color-accent)",
               }}
@@ -278,8 +262,8 @@ export default function Vehicles() {
                           ? "var(--color-safe)"
                           : "var(--color-warn)",
                         border: `1px solid ${d.is_registered
-                          ? "oklch(72% 0.18 145 / 0.25)"
-                          : "oklch(80% 0.18 85 / 0.25)"
+                          ? "#1d4a3a"
+                          : "#4d3a1a"
                           }`,
                       }}
                     >
