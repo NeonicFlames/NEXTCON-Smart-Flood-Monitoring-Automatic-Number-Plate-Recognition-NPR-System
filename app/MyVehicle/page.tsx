@@ -275,11 +275,10 @@ export default function MyVehiclePage() {
                       color: searchResult.is_active
                         ? "var(--color-safe)"
                         : "var(--color-warn)",
-                      border: `1px solid ${
-                        searchResult.is_active
+                      border: `1px solid ${searchResult.is_active
                           ? "oklch(70% 0.18 145 / 0.3)"
                           : "oklch(78% 0.18 85 / 0.3)"
-                      }`,
+                        }`,
                     }}
                   >
                     <CheckCircle2 size={16} />

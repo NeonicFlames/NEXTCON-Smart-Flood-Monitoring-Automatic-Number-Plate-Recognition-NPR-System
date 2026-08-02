@@ -430,8 +430,8 @@ export default function RegistrationPage() {
                               ? "var(--color-safe)"
                               : "var(--color-warn)",
                             border: `1px solid ${vehicle.is_active
-                                ? "oklch(70% 0.18 145 / 0.2)"
-                                : "oklch(78% 0.18 85 / 0.2)"
+                              ? "oklch(70% 0.18 145 / 0.2)"
+                              : "oklch(78% 0.18 85 / 0.2)"
                               }`,
                           }}
                         >

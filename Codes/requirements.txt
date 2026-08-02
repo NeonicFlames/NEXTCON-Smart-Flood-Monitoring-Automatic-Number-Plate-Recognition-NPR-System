@@ -1,0 +1,8 @@
+# RTSP ANPR + Flood Monitoring pipeline dependencies
+ultralytics
+easyocr
+opencv-python
+torch
+numpy
+requests
+pyserial
