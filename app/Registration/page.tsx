@@ -142,18 +142,11 @@ export default function RegistrationPage() {
 
   return (
     <AdminGuard>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div
-              className="p-2.5 rounded-lg shrink-0"
-              style={{
-                background: "var(--color-paper-2)",
-                color: "var(--color-accent)",
-                border: "1px solid var(--color-rule)",
-              }}
-            >
+          <div className="flex items-start gap-4">
+            <div className="icon-chip">
               <Car size={22} />
             </div>
             <div>
@@ -173,13 +166,13 @@ export default function RegistrationPage() {
                   style={{
                     background: "var(--color-accent-subtle)",
                     color: "var(--color-accent)",
-                    border: "1px solid var(--color-rule)",
+                    border: "1px solid oklch(66% 0.20 250 / 0.25)",
                   }}
                 >
                   Admin Control
                 </span>
               </div>
-              <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+              <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
                 Add, authorize, inspect, and remove registered vehicle permits
               </p>
             </div>
@@ -188,12 +181,7 @@ export default function RegistrationPage() {
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={loadData}
-              className="p-2 rounded-md border text-xs font-medium flex items-center gap-1.5 transition"
-              style={{
-                background: "var(--color-paper-2)",
-                color: "var(--color-neutral)",
-                borderColor: "var(--color-rule)",
-              }}
+              className="btn-ghost p-2 text-xs font-medium flex items-center gap-1.5 cursor-pointer"
               title="Refresh Registry"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -201,11 +189,7 @@ export default function RegistrationPage() {
 
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold shadow-sm transition"
-              style={{
-                background: "var(--color-accent)",
-                color: "#ffffff",
-              }}
+              className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer"
             >
               <Plus size={16} />
               <span>Register New Vehicle</span>
@@ -258,6 +242,7 @@ export default function RegistrationPage() {
           style={{
             background: "var(--color-paper-2)",
             borderColor: "var(--color-rule)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           {/* Search Input */}
@@ -304,7 +289,7 @@ export default function RegistrationPage() {
 
         {/* Vehicles Registry Table */}
         <section className="card-flush">
-          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+          <div className="px-6 pt-6 pb-4 flex items-center justify-between">
             <h2
               className="text-sm font-semibold"
               style={{ color: "var(--color-ink)" }}
@@ -326,22 +311,22 @@ export default function RegistrationPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--color-rule)" }}>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-neutral">
                     Plate Number
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-neutral">
                     Owner Name
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-neutral">
                     Contact Details
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-neutral">
                     Vehicle Type
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-neutral">
                     Status
                   </th>
-                  <th className="text-right px-5 py-3 text-xs font-medium text-neutral">
+                  <th className="text-right px-6 py-3 text-xs font-medium text-neutral">
                     Admin Actions
                   </th>
                 </tr>
@@ -350,13 +335,13 @@ export default function RegistrationPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-sm text-neutral">
+                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-neutral">
                       Loading vehicle registry data...
                     </td>
                   </tr>
                 ) : filteredVehicles.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-sm text-neutral">
+                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-neutral">
                       No registered vehicles match your filter criteria.
                     </td>
                   </tr>
@@ -373,7 +358,7 @@ export default function RegistrationPage() {
                     >
                       {/* Plate Number */}
                       <td
-                        className="px-5 py-3.5 font-bold tracking-wider"
+                        className="px-6 py-3.5 font-bold tracking-wider"
                         style={{
                           color: "var(--color-accent)",
                           fontFamily: "var(--font-outlier)",
@@ -383,12 +368,12 @@ export default function RegistrationPage() {
                       </td>
 
                       {/* Owner */}
-                      <td className="px-5 py-3.5 font-medium" style={{ color: "var(--color-ink)" }}>
+                      <td className="px-6 py-3.5 font-medium" style={{ color: "var(--color-ink)" }}>
                         {vehicle.owner_name}
                       </td>
 
                       {/* Contact */}
-                      <td className="px-5 py-3.5 text-xs text-neutral">
+                      <td className="px-6 py-3.5 text-xs text-neutral">
                         <div className="space-y-0.5">
                           {vehicle.phone && (
                             <div className="flex items-center gap-1.5">
@@ -407,7 +392,7 @@ export default function RegistrationPage() {
                       </td>
 
                       {/* Type & Zone */}
-                      <td className="px-5 py-3.5 text-xs">
+                      <td className="px-6 py-3.5 text-xs">
                         <div className="font-medium" style={{ color: "var(--color-ink-2)" }}>
                           {vehicle.vehicle_type || "Car"}
                         </div>
@@ -417,11 +402,11 @@ export default function RegistrationPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-5 py-3.5">
+                      <td className="px-6 py-3.5">
                         <button
                           onClick={() => handleToggleStatus(vehicle)}
                           title="Click to toggle status"
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition"
+                          className="badge cursor-pointer hover:opacity-80 transition"
                           style={{
                             background: vehicle.is_active
                               ? "var(--color-safe-subtle)"
@@ -430,8 +415,8 @@ export default function RegistrationPage() {
                               ? "var(--color-safe)"
                               : "var(--color-warn)",
                             border: `1px solid ${vehicle.is_active
-                              ? "oklch(70% 0.18 145 / 0.2)"
-                              : "oklch(78% 0.18 85 / 0.2)"
+                              ? "oklch(72% 0.18 145 / 0.25)"
+                              : "oklch(80% 0.18 85 / 0.25)"
                               }`,
                           }}
                         >
@@ -448,12 +433,12 @@ export default function RegistrationPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-6 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {!vehicle.is_active && (
                             <button
                               onClick={() => handleToggleStatus(vehicle)}
-                              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center gap-1"
+                              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center gap-1 cursor-pointer"
                               title="Approve and activate this permit"
                             >
                               <CheckCircle2 size={13} />
@@ -462,7 +447,7 @@ export default function RegistrationPage() {
                           )}
                           <button
                             onClick={() => setDeleteConfirmId(vehicle.id)}
-                            className="p-1.5 rounded-md hover:bg-rose-500/10 text-rose-600 transition"
+                            className="p-1.5 rounded-md hover:bg-rose-500/10 text-rose-600 transition cursor-pointer"
                             title="Remove vehicle permit"
                           >
                             <Trash2 size={16} />
@@ -482,19 +467,21 @@ export default function RegistrationPage() {
         {isAddModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
             <div
-              className="w-full max-w-lg p-6 rounded-xl border shadow-2xl space-y-5"
+              className="w-full max-w-lg p-6 rounded-2xl border shadow-2xl space-y-5"
               style={{
                 background: "var(--color-paper-2)",
                 borderColor: "var(--color-rule)",
+                boxShadow: "var(--shadow-pop)",
               }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div
-                    className="p-2 rounded-md"
+                    className="p-2 rounded-lg"
                     style={{
-                      background: "var(--color-accent-subtle)",
+                      background: "var(--gradient-accent-soft)",
                       color: "var(--color-accent)",
+                      border: "1px solid oklch(66% 0.20 250 / 0.25)",
                     }}
                   >
                     <Car size={20} />
@@ -508,7 +495,7 @@ export default function RegistrationPage() {
                 </div>
                 <button
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5"
+                  className="p-1.5 rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                 >
                   <XCircle size={18} />
                 </button>
@@ -623,7 +610,7 @@ export default function RegistrationPage() {
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5"
+                    className="px-4 py-2 font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                     style={{ color: "var(--color-neutral)" }}
                   >
                     Cancel
@@ -631,8 +618,7 @@ export default function RegistrationPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 font-semibold text-white rounded-md shadow transition"
-                    style={{ background: "var(--color-accent)" }}
+                    className="btn-primary px-4 py-2 font-semibold cursor-pointer"
                   >
                     {submitting ? "Saving..." : "Add Vehicle Permit"}
                   </button>
@@ -646,10 +632,11 @@ export default function RegistrationPage() {
         {deleteConfirmId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
             <div
-              className="w-full max-w-md p-6 rounded-xl border shadow-2xl space-y-4"
+              className="w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-4"
               style={{
                 background: "var(--color-paper-2)",
                 borderColor: "var(--color-rule)",
+                boxShadow: "var(--shadow-pop)",
               }}
             >
               <div className="flex items-center gap-3">
@@ -669,13 +656,13 @@ export default function RegistrationPage() {
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   onClick={() => setDeleteConfirmId(null)}
-                  className="px-4 py-2 text-xs font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-neutral"
+                  className="px-4 py-2 text-xs font-medium rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-neutral cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDelete(deleteConfirmId)}
-                  className="px-4 py-2 text-xs font-semibold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow"
+                  className="px-4 py-2 text-xs font-semibold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow cursor-pointer"
                 >
                   Confirm Delete
                 </button>

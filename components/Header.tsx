@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Activity } from "lucide-react";
 
 const routeTitles: Record<string, string> = {
   "/": "Dashboard Overview",
@@ -38,11 +39,13 @@ export default function Header() {
         style={{
           background: "var(--color-safe-subtle)",
           color: "var(--color-safe)",
-          border: "1px solid oklch(70% 0.18 145 / 0.2)",
+          border: "1px solid oklch(72% 0.18 145 / 0.25)",
+          boxShadow: "var(--shadow-glow-safe)",
         }}
       >
         <span className="status-dot status-dot--safe" />
         <span>ONLINE</span>
+        <Activity size={12} className="opacity-70" />
       </div>
     </header>
   );

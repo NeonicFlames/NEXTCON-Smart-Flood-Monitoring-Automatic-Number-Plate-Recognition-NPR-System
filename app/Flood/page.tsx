@@ -35,6 +35,7 @@ export default function Flood() {
   }, []);
 
   const depth = reading?.depth_cm ?? 0;
+  const depthDisplay = depth.toFixed(2);
   const status = reading?.status ?? "SAFE";
 
   const statusColor =
@@ -81,24 +82,17 @@ export default function Flood() {
 
   const bannerDescription =
     status === "DANGER"
-      ? `Water level is currently ${depth} cm, exceeding the ${dangerThreshold} cm danger threshold. Immediate evacuation required for campus parking areas.`
+      ? `Water level is currently ${depthDisplay} cm, exceeding the ${dangerThreshold} cm danger threshold. Immediate evacuation required for campus parking areas.`
       : status === "WARNING"
-      ? `Water level is currently ${depth} cm, above the ${warningThreshold} cm warning threshold. Monitor situation closely.`
-      : `Water level is currently ${depth} cm, well below the ${warningThreshold} cm alert threshold. No action required for campus parking areas.`;
+      ? `Water level is currently ${depthDisplay} cm, above the ${warningThreshold} cm warning threshold. Monitor situation closely.`
+      : `Water level is currently ${depthDisplay} cm, well below the ${warningThreshold} cm alert threshold. No action required for campus parking areas.`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className="p-2.5 rounded-lg shrink-0"
-            style={{
-              background: "var(--color-paper-2)",
-              color: "var(--color-info)",
-              border: "1px solid var(--color-rule)",
-            }}
-          >
+        <div className="flex items-start gap-4">
+          <div className="icon-chip">
             <Waves size={22} />
           </div>
           <div>
@@ -112,19 +106,20 @@ export default function Flood() {
             >
               Flood Water Level Monitoring
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
               Ultrasonic telemetry and automated water rise detection
             </p>
           </div>
         </div>
 
         <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
           style={{
             background: "var(--color-paper-2)",
             color: "var(--color-neutral)",
             border: "1px solid var(--color-rule)",
             fontFamily: "var(--font-outlier)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <Activity size={14} style={{ color: "var(--color-safe)" }} />
@@ -139,7 +134,7 @@ export default function Flood() {
             Sensor Health
           </p>
           <p
-            className="text-lg font-semibold mt-1.5 flex items-center gap-2"
+            className="text-lg font-semibold mt-2 flex items-center gap-2"
             style={{ color: "var(--color-safe)" }}
           >
             <span className="status-dot status-dot--safe" />
@@ -152,14 +147,14 @@ export default function Flood() {
             Current Water Depth
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl font-bold mt-2"
             style={{
               color: "var(--color-info)",
               fontFamily: "var(--font-outlier)",
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {depth} cm
+            {depthDisplay} cm
           </p>
         </div>
 
@@ -168,7 +163,7 @@ export default function Flood() {
             Overall Risk State
           </p>
           <p
-            className="text-2xl font-bold mt-1 flex items-center gap-2"
+            className="text-2xl font-bold mt-2 flex items-center gap-2"
             style={{ color: statusColor }}
           >
             <span className={`status-dot ${statusDot}`} />
@@ -179,15 +174,20 @@ export default function Flood() {
 
       {/* Current Environmental State */}
       <section
-        className="card"
+        className="card p-6"
         style={{
           background: bannerBg,
           border: `1px solid ${bannerBorder}`,
+          boxShadow: status === "DANGER"
+            ? "var(--shadow-glow-danger)"
+            : status === "WARNING"
+              ? "var(--shadow-glow-warn)"
+              : "var(--shadow-glow-safe)",
         }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
+            <span className="w-3 h-3 rounded-full" style={{ background: statusColor, boxShadow: `0 0 12px ${statusColor}` }} />
             <h2
               className="text-lg font-bold"
               style={{ color: statusColor }}
@@ -224,10 +224,12 @@ export default function Flood() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
-            className="p-4 rounded-lg"
+            className="p-5 rounded-xl"
             style={{
               background: "var(--color-warn-subtle)",
               borderLeft: "3px solid var(--color-warn)",
+              border: "1px solid oklch(80% 0.18 85 / 0.2)",
+              boxShadow: "var(--shadow-card)",
             }}
           >
             <div className="flex items-center gap-2">
@@ -252,10 +254,12 @@ export default function Flood() {
           </div>
 
           <div
-            className="p-4 rounded-lg"
+            className="p-5 rounded-xl"
             style={{
               background: "var(--color-danger-subtle)",
               borderLeft: "3px solid var(--color-danger)",
+              border: "1px solid oklch(66% 0.22 25 / 0.2)",
+              boxShadow: "var(--shadow-card)",
             }}
           >
             <div className="flex items-center gap-2">

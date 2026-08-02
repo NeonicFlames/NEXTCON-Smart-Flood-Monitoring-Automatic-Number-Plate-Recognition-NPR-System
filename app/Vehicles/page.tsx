@@ -41,18 +41,11 @@ export default function Vehicles() {
   const latest = detections[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className="p-2.5 rounded-lg shrink-0"
-            style={{
-              background: "var(--color-paper-2)",
-              color: "var(--color-accent)",
-              border: "1px solid var(--color-rule)",
-            }}
-          >
+        <div className="flex items-start gap-4">
+          <div className="icon-chip">
             <Car size={22} />
           </div>
           <div>
@@ -64,7 +57,7 @@ export default function Vehicles() {
             >
               Automatic Number Plate Recognition (ANPR)
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
               Automated vehicle license plate extraction and verification
             </p>
           </div>
@@ -80,7 +73,7 @@ export default function Vehicles() {
             ANPR Engine
           </p>
           <p
-            className="text-lg font-display font-semibold mt-1 flex items-center gap-2"
+            className="text-lg font-display font-semibold mt-2 flex items-center gap-2"
             style={{ color: "var(--color-safe)" }}
           >
             <span className="status-dot status-dot--safe" />
@@ -93,7 +86,7 @@ export default function Vehicles() {
             Total Detections Today
           </p>
           <p
-            className="text-2xl font-outlier font-bold mt-1"
+            className="text-2xl font-outlier font-bold mt-2"
             style={{
               color: "var(--color-info)",
               fontVariantNumeric: "tabular-nums",
@@ -108,7 +101,7 @@ export default function Vehicles() {
             Latest Plate Identified
           </p>
           <p
-            className="text-2xl plate-number mt-1"
+            className="text-2xl plate-number mt-2"
             style={{
               color: "var(--color-accent)",
             }}
@@ -123,16 +116,17 @@ export default function Vehicles() {
         <section className="card flex flex-col md:flex-row items-center justify-between gap-6 p-6">
           <div>
             <span
-              className="text-category px-2.5 py-1 rounded"
+              className="text-category px-2.5 py-1 rounded-md"
               style={{
                 background: "var(--color-paper-3)",
                 color: "var(--color-neutral)",
+                border: "1px solid var(--color-rule)",
               }}
             >
               LATEST EXTRACTION
             </span>
             <h2
-              className="text-4xl plate-number mt-3"
+              className="text-4xl plate-number mt-3 gradient-text glow-text"
               style={{
                 color: "var(--color-accent)",
               }}
@@ -150,9 +144,10 @@ export default function Vehicles() {
           </div>
 
           <div
-            className="flex items-center gap-4 px-6 py-4 rounded-lg self-stretch md:self-auto justify-center"
+            className="flex items-center gap-4 px-6 py-4 rounded-xl self-stretch md:self-auto justify-center"
             style={{
               background: "var(--color-paper-3)",
+              border: "1px solid var(--color-rule)",
             }}
           >
             <CheckCircle2 size={32} style={{ color: latest.is_registered ? "var(--color-safe)" : "var(--color-warn)" }} />
@@ -175,7 +170,7 @@ export default function Vehicles() {
 
       {/* Detection History Table */}
       <section className="card-flush">
-        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+        <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <h2
             className="font-display font-semibold text-base"
             style={{ color: "var(--color-ink)" }}
@@ -197,25 +192,25 @@ export default function Vehicles() {
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-rule)" }}>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Plate Number
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Time
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Confidence
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Status
@@ -226,7 +221,7 @@ export default function Vehicles() {
             <tbody>
               {detections.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm" style={{ color: "var(--color-muted)" }}>
+                  <td colSpan={4} className="px-6 py-8 text-center text-sm" style={{ color: "var(--color-muted)" }}>
                     No detections yet
                   </td>
                 </tr>
@@ -242,7 +237,7 @@ export default function Vehicles() {
                   }}
                 >
                   <td
-                    className="px-5 py-3 font-semibold"
+                    className="px-6 py-3.5 font-semibold"
                     style={{
                       color: "var(--color-accent)",
                       fontFamily: "var(--font-outlier)",
@@ -252,7 +247,7 @@ export default function Vehicles() {
                     {d.plate_number}
                   </td>
                   <td
-                    className="px-5 py-3"
+                    className="px-6 py-3.5"
                     style={{
                       color: "var(--color-ink-2)",
                       fontFamily: "var(--font-outlier)",
@@ -264,7 +259,7 @@ export default function Vehicles() {
                     })}
                   </td>
                   <td
-                    className="px-5 py-3 font-medium"
+                    className="px-6 py-3.5 font-medium"
                     style={{
                       color: "var(--color-safe)",
                       fontFamily: "var(--font-outlier)",
@@ -272,9 +267,9 @@ export default function Vehicles() {
                   >
                     {Math.round(d.confidence * 100)}%
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-6 py-3.5">
                     <span
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                      className="badge"
                       style={{
                         background: d.is_registered
                           ? "var(--color-safe-subtle)"
@@ -283,8 +278,8 @@ export default function Vehicles() {
                           ? "var(--color-safe)"
                           : "var(--color-warn)",
                         border: `1px solid ${d.is_registered
-                          ? "oklch(70% 0.18 145 / 0.2)"
-                          : "oklch(78% 0.18 85 / 0.2)"
+                          ? "oklch(72% 0.18 145 / 0.25)"
+                          : "oklch(80% 0.18 85 / 0.25)"
                           }`,
                       }}
                     >

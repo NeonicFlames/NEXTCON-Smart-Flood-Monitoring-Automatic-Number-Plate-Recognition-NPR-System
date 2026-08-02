@@ -146,7 +146,7 @@ export default function Home() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {reading ? `${reading.depth_cm} cm` : "—"}
+            {reading ? `${Number(reading.depth_cm).toFixed(2)} cm` : "—"}
           </p>
         </div>
 

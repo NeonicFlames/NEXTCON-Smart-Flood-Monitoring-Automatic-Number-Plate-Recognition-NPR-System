@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, AlertTriangle, ShieldAlert, Check } from "lucide-react";
+import { AlertCircle, ShieldAlert, Check } from "lucide-react";
 import {
   getActiveFloodAlerts,
   getAlertHistory,
@@ -74,6 +74,7 @@ export default function Alerts() {
 
   const status = reading?.status ?? "SAFE";
   const depth = reading?.depth_cm ?? 0;
+  const depthDisplay = depth.toFixed(2);
   const hasActiveAlerts = activeAlerts.length > 0 || status === "DANGER" || status === "WARNING";
 
   const statusStyle = (alertType: string) => {
@@ -103,16 +104,16 @@ export default function Alerts() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <div
-            className="p-2.5 rounded-lg shrink-0"
+            className="icon-chip"
             style={{
               background: "var(--color-danger-subtle)",
               color: "var(--color-danger)",
-              border: "1px solid oklch(65% 0.22 25 / 0.3)",
+              border: "1px solid oklch(66% 0.22 25 / 0.3)",
             }}
           >
             <AlertCircle size={22} />
@@ -128,19 +129,20 @@ export default function Alerts() {
             >
               Emergency Flood Alerts
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
               Automated vehicle evacuation broadcasts and risk notifications
             </p>
           </div>
         </div>
 
         <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
           style={{
             background: hasActiveAlerts ? "var(--color-danger-subtle)" : "var(--color-safe-subtle)",
             color: hasActiveAlerts ? "var(--color-danger)" : "var(--color-safe)",
-            border: `1px solid ${hasActiveAlerts ? "oklch(65% 0.22 25 / 0.3)" : "oklch(70% 0.18 145 / 0.3)"}`,
+            border: `1px solid ${hasActiveAlerts ? "oklch(66% 0.22 25 / 0.3)" : "oklch(72% 0.18 145 / 0.3)"}`,
             fontFamily: "var(--font-outlier)",
+            boxShadow: hasActiveAlerts ? "var(--shadow-glow-danger)" : "var(--shadow-glow-safe)",
           }}
         >
           <ShieldAlert size={14} />
@@ -159,7 +161,8 @@ export default function Alerts() {
           style={{
             background: status === "DANGER" ? "var(--color-danger-subtle)" : "var(--color-warn-subtle)",
             borderLeft: `4px solid ${status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)"}`,
-            borderColor: status === "DANGER" ? "oklch(65% 0.22 25 / 0.3)" : "oklch(78% 0.18 85 / 0.3)",
+            borderColor: status === "DANGER" ? "oklch(66% 0.22 25 / 0.3)" : "oklch(80% 0.18 85 / 0.3)",
+            boxShadow: status === "DANGER" ? "var(--shadow-glow-danger)" : "var(--shadow-glow-warn)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -174,11 +177,12 @@ export default function Alerts() {
             </div>
 
             <span
-              className="text-xs font-medium px-2.5 py-0.5 rounded"
+              className="text-xs font-medium px-2.5 py-0.5 rounded-full"
               style={{
                 background: "var(--color-paper-2)",
                 color: status === "DANGER" ? "var(--color-danger)" : "var(--color-warn)",
                 fontFamily: "var(--font-outlier)",
+                border: `1px solid ${status === "DANGER" ? "oklch(66% 0.22 25 / 0.3)" : "oklch(80% 0.18 85 / 0.3)"}`,
               }}
             >
               BROADCAST ACTIVE
@@ -200,7 +204,7 @@ export default function Alerts() {
                 fontFamily: "var(--font-outlier)",
               }}
             >
-              {depth} cm
+              {depthDisplay} cm
             </strong>
             , exceeding the {status === "DANGER" ? "40 cm danger" : "25 cm warning"} ceiling.
           </p>
@@ -222,7 +226,7 @@ export default function Alerts() {
               return (
                 <div
                   key={alert.id}
-                  className="flex items-center justify-between rounded-lg p-4"
+                  className="flex items-center justify-between rounded-xl p-4"
                   style={{ background: s.bg, border: `1px solid ${s.border}` }}
                 >
                   <div className="flex-1 min-w-0">
@@ -252,12 +256,7 @@ export default function Alerts() {
                   </div>
                   <button
                     onClick={() => handleAcknowledge(alert.id)}
-                    className="shrink-0 ml-4 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer"
-                    style={{
-                      background: "var(--color-paper-2)",
-                      color: "var(--color-ink)",
-                      border: "1px solid var(--color-rule)",
-                    }}
+                    className="btn-ghost shrink-0 ml-4 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 cursor-pointer"
                   >
                     <Check size={14} />
                     Acknowledge
@@ -269,35 +268,9 @@ export default function Alerts() {
         </section>
       )}
 
-      {/* Evacuation Action Panel */}
-      {hasActiveAlerts && (
-        <section
-          className="card p-5"
-          style={{
-            background: "var(--color-warn-subtle)",
-            borderLeft: "4px solid var(--color-warn)",
-            borderColor: "oklch(78% 0.18 85 / 0.3)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={18} style={{ color: "var(--color-warn)" }} />
-            <h3
-              className="text-sm font-semibold"
-              style={{ color: "var(--color-warn)" }}
-            >
-              Immediate Action Required
-            </h3>
-          </div>
-
-          <p className="text-sm" style={{ color: "var(--color-ink)" }}>
-            All vehicle owners parked in Zone A are instructed to relocate their vehicles immediately to higher ground at Main Building Lot C.
-          </p>
-        </section>
-      )}
-
       {/* Alert History Table */}
       <section className="card-flush">
-        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+        <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <h2
             className="text-sm font-semibold"
             style={{ color: "var(--color-ink)" }}
@@ -320,25 +293,25 @@ export default function Alerts() {
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-rule)" }}>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Date
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Vehicle
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Peak Water Level
                 </th>
                 <th
-                  className="text-left px-5 py-2.5 text-xs font-medium"
+                  className="text-left px-6 py-3 text-xs font-medium"
                   style={{ color: "var(--color-neutral)" }}
                 >
                   Alert Status
@@ -349,7 +322,7 @@ export default function Alerts() {
             <tbody>
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm" style={{ color: "var(--color-muted)" }}>
+                  <td colSpan={4} className="px-6 py-8 text-center text-sm" style={{ color: "var(--color-muted)" }}>
                     No alert history
                   </td>
                 </tr>
@@ -367,7 +340,7 @@ export default function Alerts() {
                     }}
                   >
                     <td
-                      className="px-5 py-3"
+                      className="px-6 py-3.5"
                       style={{
                         color: "var(--color-ink)",
                         fontFamily: "var(--font-outlier)",
@@ -380,7 +353,7 @@ export default function Alerts() {
                       })}
                     </td>
                     <td
-                      className="px-5 py-3 font-semibold"
+                      className="px-6 py-3.5 font-semibold"
                       style={{
                         color: "var(--color-accent)",
                         fontFamily: "var(--font-outlier)",
@@ -390,18 +363,18 @@ export default function Alerts() {
                       {item.plate_number}
                     </td>
                     <td
-                      className="px-5 py-3 font-semibold"
+                      className="px-6 py-3.5 font-semibold"
                       style={{
                         color: "var(--color-ink)",
                         fontFamily: "var(--font-outlier)",
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {item.flood_level_cm} cm
+                      {Number(item.flood_level_cm).toFixed(2)} cm
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-6 py-3.5">
                       <span
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                        className="badge"
                         style={{
                           background: s.bg,
                           color: s.color,

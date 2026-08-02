@@ -41,7 +41,7 @@ export default function WaterChart() {
               hour: "numeric",
               minute: "2-digit",
             }),
-            level: Number(r.depth_cm),
+            level: Number(Number(r.depth_cm).toFixed(2)),
           }))
         );
       } catch (e) {
@@ -59,7 +59,7 @@ export default function WaterChart() {
             hour: "numeric",
             minute: "2-digit",
           }),
-          level: Number(r.depth_cm),
+          level: Number(Number(r.depth_cm).toFixed(2)),
         },
       ]);
     });
@@ -103,24 +103,29 @@ export default function WaterChart() {
         <AreaChart data={data}>
           <defs>
             <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="oklch(65% 0.20 250)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="oklch(65% 0.20 250)" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="oklch(66% 0.20 250)" stopOpacity={0.4} />
+              <stop offset="60%" stopColor="oklch(72% 0.16 235)" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="oklch(72% 0.16 235)" stopOpacity={0.02} />
+            </linearGradient>
+            <linearGradient id="waterStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="oklch(66% 0.20 250)" />
+              <stop offset="100%" stopColor="oklch(72% 0.16 235)" />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="oklch(28% 0.010 250)"
+            stroke="oklch(30% 0.012 255)"
             vertical={false}
           />
           <XAxis
             dataKey="time"
-            stroke="oklch(68% 0.008 250)"
+            stroke="oklch(70% 0.010 255)"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            stroke="oklch(68% 0.008 250)"
+            stroke="oklch(70% 0.010 255)"
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -128,24 +133,24 @@ export default function WaterChart() {
           />
           <Tooltip
             contentStyle={{
-              background: "oklch(18% 0.012 250)",
-              borderColor: "oklch(28% 0.010 250)",
-              color: "oklch(95% 0.005 250)",
-              borderRadius: "0.5rem",
+              background: "oklch(17% 0.014 255)",
+              borderColor: "oklch(30% 0.012 255)",
+              color: "oklch(96% 0.006 255)",
+              borderRadius: "0.75rem",
               fontSize: "var(--text-xs)",
               fontFamily: "var(--font-outlier)",
-              boxShadow: "0 4px 12px oklch(0% 0 0 / 0.4)",
+              boxShadow: "var(--shadow-pop)",
             }}
-            labelStyle={{ color: "oklch(68% 0.008 250)", fontFamily: "var(--font-outlier)" }}
+            labelStyle={{ color: "oklch(70% 0.010 255)", fontFamily: "var(--font-outlier)" }}
           />
           <Area
             type="monotone"
             dataKey="level"
-            stroke="oklch(65% 0.20 250)"
-            strokeWidth={2}
+            stroke="url(#waterStroke)"
+            strokeWidth={2.5}
             fill="url(#waterGradient)"
-            dot={{ r: 3, fill: "oklch(65% 0.20 250)", strokeWidth: 0 }}
-            activeDot={{ r: 5, fill: "oklch(65% 0.20 250)", strokeWidth: 2, stroke: "oklch(14% 0.010 250)" }}
+            dot={{ r: 3, fill: "oklch(66% 0.20 250)", strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: "oklch(66% 0.20 250)", strokeWidth: 2, stroke: "oklch(13% 0.012 255)" }}
           />
         </AreaChart>
       </ResponsiveContainer>

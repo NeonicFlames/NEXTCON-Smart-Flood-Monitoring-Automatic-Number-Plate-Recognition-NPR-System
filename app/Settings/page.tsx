@@ -63,18 +63,11 @@ export default function Settings() {
   const pushEnabled = settings.push_enabled === "true";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className="p-2.5 rounded-lg shrink-0"
-            style={{
-              background: "var(--color-paper-2)",
-              color: "var(--color-neutral)",
-              border: "1px solid var(--color-rule)",
-            }}
-          >
+        <div className="flex items-start gap-4">
+          <div className="icon-chip">
             <SettingsIcon size={22} />
           </div>
           <div>
@@ -88,19 +81,20 @@ export default function Settings() {
             >
               System Configuration &amp; Hardware
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
               Manage sensor thresholds, camera feeds, and alert notifications
             </p>
           </div>
         </div>
 
         <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
           style={{
             background: "var(--color-paper-2)",
             color: "var(--color-neutral)",
             border: "1px solid var(--color-rule)",
             fontFamily: "var(--font-outlier)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <Sliders size={14} style={{ color: "var(--color-accent)" }} />
@@ -187,8 +181,8 @@ export default function Settings() {
           {cameras.map((cam) => (
             <div
               key={cam.id}
-              className="rounded-lg p-4"
-              style={{ background: "var(--color-paper-3)" }}
+              className="rounded-xl p-4"
+              style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule)" }}
             >
               <div
                 className="flex items-center gap-2 text-sm font-medium"
@@ -211,8 +205,8 @@ export default function Settings() {
           ))}
 
           <div
-            className="rounded-lg p-4"
-            style={{ background: "var(--color-paper-3)" }}
+            className="rounded-xl p-4"
+            style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule)" }}
           >
             <div
               className="flex items-center gap-2 text-sm font-medium"
@@ -231,8 +225,8 @@ export default function Settings() {
           </div>
 
           <div
-            className="rounded-lg p-4"
-            style={{ background: "var(--color-paper-3)" }}
+            className="rounded-xl p-4"
+            style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule)" }}
           >
             <div
               className="flex items-center gap-2 text-sm font-medium"
@@ -266,8 +260,8 @@ export default function Settings() {
 
         <div className="space-y-2">
           <div
-            className="flex justify-between items-center rounded-md px-4 py-3"
-            style={{ background: "var(--color-paper-3)" }}
+            className="flex justify-between items-center rounded-xl px-4 py-3"
+            style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule)" }}
           >
             <p className="text-sm" style={{ color: "var(--color-ink)" }}>
               Telegram Broadcast on Warning Threshold
@@ -278,7 +272,7 @@ export default function Settings() {
               style={{
                 background: telegramEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
                 color: telegramEnabled ? "var(--color-safe)" : "var(--color-muted)",
-                border: telegramEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
+                border: telegramEnabled ? "1px solid oklch(72% 0.18 145 / 0.25)" : "1px solid var(--color-rule)",
               }}
             >
               {telegramEnabled ? "ON" : "OFF"}
@@ -286,8 +280,8 @@ export default function Settings() {
           </div>
 
           <div
-            className="flex justify-between items-center rounded-md px-4 py-3"
-            style={{ background: "var(--color-paper-3)" }}
+            className="flex justify-between items-center rounded-xl px-4 py-3"
+            style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule)" }}
           >
             <p className="text-sm" style={{ color: "var(--color-ink)" }}>
               Emergency Evacuation Push Alert
@@ -298,7 +292,7 @@ export default function Settings() {
               style={{
                 background: pushEnabled ? "var(--color-safe-subtle)" : "var(--color-paper-3)",
                 color: pushEnabled ? "var(--color-safe)" : "var(--color-muted)",
-                border: pushEnabled ? "1px solid oklch(70% 0.18 145 / 0.2)" : "1px solid var(--color-rule)",
+                border: pushEnabled ? "1px solid oklch(72% 0.18 145 / 0.25)" : "1px solid var(--color-rule)",
               }}
             >
               {pushEnabled ? "ON" : "OFF"}

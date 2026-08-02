@@ -44,13 +44,13 @@ export default function Sidebar() {
     >
       <div className="p-5">
         {/* Brand / Logo */}
-        <div className="flex items-center gap-3 mb-6 px-2">
+        <div className="flex items-center gap-3 mb-8 px-2">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{
-              background: "var(--color-accent-subtle)",
-              color: "var(--color-accent)",
-              border: "1px solid var(--color-rule)",
+              background: "var(--gradient-accent)",
+              color: "#ffffff",
+              boxShadow: "var(--shadow-glow-accent)",
             }}
           >
             <Shield size={20} />
@@ -76,11 +76,11 @@ export default function Sidebar() {
         </div>
 
         {/* User Navigation Section */}
-        <div className="mb-6">
+        <div className="mb-8">
           <p className="px-3 mb-2 text-category">
             User Portal
           </p>
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             {userNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -88,23 +88,30 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
                   style={{
                     background: isActive
-                      ? "var(--color-accent-subtle)"
+                      ? "var(--gradient-accent-soft)"
                       : "transparent",
                     color: isActive
                       ? "var(--color-accent)"
                       : "var(--color-neutral)",
-                    borderLeft: isActive
-                      ? "2px solid var(--color-accent)"
-                      : "2px solid transparent",
+                    border: isActive
+                      ? "1px solid oklch(66% 0.20 250 / 0.25)"
+                      : "1px solid transparent",
+                    boxShadow: isActive ? "var(--shadow-glow-accent)" : "none",
                   }}
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon size={17} strokeWidth={isActive ? 2 : 1.5} />
                     <span>{item.name}</span>
                   </div>
+                  {isActive && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: "var(--color-accent)" }}
+                    />
+                  )}
                 </Link>
               );
             })}
@@ -130,7 +137,7 @@ export default function Sidebar() {
             )}
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             {adminNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -138,17 +145,18 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
                   style={{
                     background: isActive
-                      ? "var(--color-accent-subtle)"
+                      ? "var(--gradient-accent-soft)"
                       : "transparent",
                     color: isActive
                       ? "var(--color-accent)"
                       : "var(--color-neutral)",
-                    borderLeft: isActive
-                      ? "2px solid var(--color-accent)"
-                      : "2px solid transparent",
+                    border: isActive
+                      ? "1px solid oklch(66% 0.20 250 / 0.25)"
+                      : "1px solid transparent",
+                    boxShadow: isActive ? "var(--shadow-glow-accent)" : "none",
                   }}
                 >
                   <div className="flex items-center gap-2.5">
@@ -159,9 +167,9 @@ export default function Sidebar() {
                     <span
                       className="text-category px-1.5 py-0.5 rounded"
                       style={{
-                        background: "var(--color-paper-3)",
+                        background: "var(--color-paper-4)",
                         color: "var(--color-accent)",
-                        border: "1px solid var(--color-rule)",
+                        border: "1px solid oklch(66% 0.20 250 / 0.25)",
                       }}
                     >
                       {item.badge}
@@ -200,7 +208,7 @@ export default function Sidebar() {
         ) : (
           <button
             onClick={() => setShowLoginModal(true)}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md text-xs font-semibold border transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold border transition cursor-pointer"
             style={{
               background: "var(--color-paper-3)",
               color: "var(--color-ink)",

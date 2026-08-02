@@ -5,35 +5,39 @@
 
 :root {
   /* ── Paper (surfaces: higher elevation = lighter in dark mode) ── */
-  --color-paper:    oklch(14% 0.010 250);   /* deep midnight background */
-  --color-paper-2:  oklch(18% 0.012 250);   /* card surface */
-  --color-paper-3:  oklch(23% 0.014 250);   /* hover/active surface & wells */
+  --color-paper:    oklch(13% 0.012 255);   /* deep midnight background */
+  --color-paper-2:  oklch(17% 0.014 255);   /* card surface */
+  --color-paper-3:  oklch(22% 0.016 255);   /* hover/active surface & wells */
+  --color-paper-4:  oklch(27% 0.018 255);   /* elevated wells / chips */
 
   /* ── Ink (text) ── */
-  --color-ink:      oklch(95% 0.005 250);   /* primary text (near-white) */
-  --color-ink-2:    oklch(82% 0.008 250);   /* secondary text */
+  --color-ink:      oklch(96% 0.006 255);   /* primary text (near-white) */
+  --color-ink-2:    oklch(84% 0.010 255);   /* secondary text */
 
   /* ── Neutrals ── */
-  --color-rule:     oklch(28% 0.010 250);   /* hairline borders */
-  --color-neutral:  oklch(68% 0.008 250);   /* label/caption text */
-  --color-muted:    oklch(52% 0.006 250);   /* tertiary text */
+  --color-rule:     oklch(30% 0.012 255);   /* hairline borders */
+  --color-neutral:  oklch(70% 0.010 255);   /* label/caption text */
+  --color-muted:    oklch(54% 0.008 255);   /* tertiary text */
 
-  /* ── Accent (electric cobalt) ── */
-  --color-accent:   oklch(65% 0.20 250);   /* vibrant electric cobalt blue */
-  --color-accent-subtle: oklch(24% 0.05 250); /* subtle active background fill */
+  /* ── Accent (electric cobalt → cyan gradient) ── */
+  --color-accent:   oklch(66% 0.20 250);   /* vibrant electric cobalt blue */
+  --color-accent-2: oklch(72% 0.16 235);   /* cyan-blue secondary accent */
+  --color-accent-subtle: oklch(24% 0.06 250); /* subtle active background fill */
+  --gradient-accent: linear-gradient(135deg, oklch(66% 0.20 250), oklch(72% 0.16 235));
+  --gradient-accent-soft: linear-gradient(135deg, oklch(66% 0.20 250 / 0.16), oklch(72% 0.16 235 / 0.10));
 
   /* ── Focus ── */
-  --color-focus:    oklch(65% 0.20 250);
+  --color-focus:    oklch(66% 0.20 250);
 
   /* ── Semantic status (vibrant for dark mode) ── */
-  --color-safe:     oklch(70% 0.18 145);   /* luminous green */
-  --color-safe-subtle: oklch(22% 0.04 145);
-  --color-warn:     oklch(78% 0.18 85);    /* luminous amber */
-  --color-warn-subtle: oklch(24% 0.04 85);
-  --color-danger:   oklch(65% 0.22 25);    /* luminous danger red */
-  --color-danger-subtle: oklch(22% 0.05 25);
-  --color-info:     oklch(70% 0.16 245);   /* luminous cyan-blue */
-  --color-info-subtle: oklch(22% 0.04 245);
+  --color-safe:     oklch(72% 0.18 145);   /* luminous green */
+  --color-safe-subtle: oklch(22% 0.05 145);
+  --color-warn:     oklch(80% 0.18 85);    /* luminous amber */
+  --color-warn-subtle: oklch(24% 0.05 85);
+  --color-danger:   oklch(66% 0.22 25);    /* luminous danger red */
+  --color-danger-subtle: oklch(22% 0.06 25);
+  --color-info:     oklch(72% 0.16 245);   /* luminous cyan-blue */
+  --color-info-subtle: oklch(22% 0.05 245);
 
   /* ── Typography (Space Grotesk + Geist Sans + Geist Mono) ── */
   --font-display:   var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -52,7 +56,7 @@
   --text-3xl:       3rem;        /* 48px - major KPI figures */
   --text-display:   clamp(2.25rem, 4.5vw + 1rem, 4.25rem);
 
-  /* ── Spacing (4pt base) ── */
+  /* ── Spacing (4pt base, more spacious) ── */
   --space-3xs:      0.125rem;
   --space-2xs:      0.25rem;
   --space-xs:       0.5rem;
@@ -62,12 +66,14 @@
   --space-xl:       2.5rem;
   --space-2xl:      4rem;
   --space-3xl:      6rem;
+  --space-4xl:      8rem;
 
   /* ── Radii ── */
-  --radius-sm:      0.375rem;
-  --radius-md:      0.5rem;
-  --radius-lg:      0.75rem;
-  --radius-xl:      1rem;
+  --radius-sm:      0.5rem;
+  --radius-md:      0.75rem;
+  --radius-lg:      1rem;
+  --radius-xl:      1.25rem;
+  --radius-2xl:     1.5rem;
   --radius-full:    9999px;
 
   /* ── Easings ── */
@@ -80,9 +86,20 @@
   --dur-short:      220ms;
   --dur-long:       420ms;
 
-  /* ── Depth ── */
+  /* ── Depth (layered premium shadows) ── */
   --shadow-whisper: 0 1px 3px oklch(0% 0 0 / 0.3);
-  --shadow-card:    0 1px 2px oklch(0% 0 0 / 0.25), 0 0 0 1px oklch(28% 0.010 250);
+  --shadow-card:    0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px -12px oklch(0% 0 0 / 0.5), 0 0 0 1px oklch(30% 0.012 255);
+  --shadow-card-hover: 0 2px 4px oklch(0% 0 0 / 0.3), 0 16px 40px -16px oklch(0% 0 0 / 0.6), 0 0 0 1px oklch(38% 0.02 255);
+  --shadow-pop:     0 4px 12px oklch(0% 0 0 / 0.4), 0 24px 60px -20px oklch(0% 0 0 / 0.7);
+  --shadow-glow-accent: 0 0 0 1px oklch(66% 0.20 250 / 0.35), 0 0 24px -4px oklch(66% 0.20 250 / 0.45);
+  --shadow-glow-safe: 0 0 0 1px oklch(72% 0.18 145 / 0.3), 0 0 20px -4px oklch(72% 0.18 145 / 0.4);
+  --shadow-glow-warn: 0 0 0 1px oklch(80% 0.18 85 / 0.3), 0 0 20px -4px oklch(80% 0.18 85 / 0.4);
+  --shadow-glow-danger: 0 0 0 1px oklch(66% 0.22 25 / 0.35), 0 0 24px -4px oklch(66% 0.22 25 / 0.5);
+
+  /* ── Glass ── */
+  --glass-bg:       oklch(20% 0.02 255 / 0.6);
+  --glass-border:   oklch(100% 0 0 / 0.08);
+  --glass-blur:     16px;
 
   /* ── Z-index ── */
   --z-base:         1;

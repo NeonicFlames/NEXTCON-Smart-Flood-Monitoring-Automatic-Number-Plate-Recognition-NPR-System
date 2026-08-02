@@ -97,15 +97,8 @@ export default function MyVehiclePage() {
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className="p-2.5 rounded-lg shrink-0"
-            style={{
-              background: "var(--color-paper-2)",
-              color: "var(--color-accent)",
-              border: "1px solid var(--color-rule)",
-            }}
-          >
+        <div className="flex items-start gap-4">
+          <div className="icon-chip">
             <Car size={22} />
           </div>
           <div>
@@ -119,7 +112,7 @@ export default function MyVehiclePage() {
             >
               Vehicle Permit Lookup &amp; Registration
             </h1>
-            <p className="mt-0.5 text-sm" style={{ color: "var(--color-neutral)" }}>
+            <p className="mt-1 text-sm" style={{ color: "var(--color-neutral)" }}>
               Check your campus gate entry clearance or apply for vehicle registration
             </p>
           </div>
@@ -130,11 +123,7 @@ export default function MyVehiclePage() {
             setShowRequestForm(!showRequestForm);
             setSuccessMessage(false);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold shadow-sm transition self-start sm:self-auto"
-          style={{
-            background: "var(--color-accent)",
-            color: "#ffffff",
-          }}
+          className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold cursor-pointer self-start sm:self-auto"
         >
           <PlusCircle size={16} />
           <span>{showRequestForm ? "Close Form" : "Register My Vehicle"}</span>
@@ -147,8 +136,9 @@ export default function MyVehiclePage() {
           className="p-4 rounded-xl border flex items-center gap-3 animate-in fade-in"
           style={{
             background: "var(--color-warn-subtle)",
-            borderColor: "oklch(78% 0.18 85 / 0.3)",
+            borderColor: "oklch(80% 0.18 85 / 0.3)",
             color: "var(--color-warn)",
+            boxShadow: "var(--shadow-glow-warn)",
           }}
         >
           <Clock size={20} className="shrink-0" />
@@ -168,6 +158,7 @@ export default function MyVehiclePage() {
         style={{
           background: "var(--color-paper-2)",
           borderColor: "var(--color-rule)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <div className="flex items-center gap-2">
@@ -205,11 +196,7 @@ export default function MyVehiclePage() {
           <button
             type="submit"
             disabled={searching}
-            className="px-6 py-3 rounded-lg text-sm font-semibold shadow transition flex items-center justify-center gap-2 shrink-0"
-            style={{
-              background: "var(--color-accent)",
-              color: "#ffffff",
-            }}
+            className="btn-primary px-6 py-3 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 shrink-0 cursor-pointer"
           >
             {searching ? (
               <span>Checking...</span>
@@ -230,7 +217,7 @@ export default function MyVehiclePage() {
                 className="p-4 rounded-xl border flex items-center gap-3 text-xs"
                 style={{
                   background: "var(--color-warn-subtle)",
-                  borderColor: "oklch(78% 0.18 85 / 0.3)",
+                  borderColor: "oklch(80% 0.18 85 / 0.3)",
                   color: "var(--color-warn)",
                 }}
               >
@@ -256,7 +243,7 @@ export default function MyVehiclePage() {
                       PERMIT VERIFICATION MATCH
                     </span>
                     <h3
-                      className="text-3xl font-extrabold tracking-wider mt-1"
+                      className="text-3xl font-extrabold tracking-wider mt-1 gradient-text glow-text"
                       style={{
                         color: "var(--color-accent)",
                         fontFamily: "var(--font-outlier)",
@@ -267,7 +254,7 @@ export default function MyVehiclePage() {
                   </div>
 
                   <span
-                    className="inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-full self-start sm:self-auto"
+                    className="badge self-start sm:self-auto"
                     style={{
                       background: searchResult.is_active
                         ? "var(--color-safe-subtle)"
@@ -276,8 +263,8 @@ export default function MyVehiclePage() {
                         ? "var(--color-safe)"
                         : "var(--color-warn)",
                       border: `1px solid ${searchResult.is_active
-                          ? "oklch(70% 0.18 145 / 0.3)"
-                          : "oklch(78% 0.18 85 / 0.3)"
+                          ? "oklch(72% 0.18 145 / 0.3)"
+                          : "oklch(80% 0.18 85 / 0.3)"
                         }`,
                     }}
                   >
@@ -311,6 +298,7 @@ export default function MyVehiclePage() {
           style={{
             background: "var(--color-paper-2)",
             borderColor: "var(--color-rule)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <div className="flex items-center gap-2">
@@ -431,15 +419,14 @@ export default function MyVehiclePage() {
               <button
                 type="button"
                 onClick={() => setShowRequestForm(false)}
-                className="px-4 py-2 font-medium rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5"
+                className="px-4 py-2 font-medium rounded-md text-neutral hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-5 py-2.5 font-semibold text-white rounded-md shadow transition"
-                style={{ background: "var(--color-accent)" }}
+                className="btn-primary px-5 py-2.5 font-semibold cursor-pointer"
               >
                 {submitting ? "Submitting..." : "Submit Registration Request"}
               </button>
