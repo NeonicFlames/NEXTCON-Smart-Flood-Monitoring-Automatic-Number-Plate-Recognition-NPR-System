@@ -27,7 +27,8 @@ from datetime import datetime
 
 # >>> PLACEHOLDER: put your RTSP camera URL here <<<
 # Example: rtsp://admin:password@192.168.1.100:554/stream1
-RTSP_URL = "rtsp://USER:PASS@CAMERA_IP:554/stream1"
+# Hikvision: 101 = main stream (high res), 102 = substream (low res)
+RTSP_URL = "rtsp://admin:camera2cd@192.168.0.59:554/Streaming/Channels/102"
 
 # Hardcoded camera UUID (only 1 camera in the system).
 # Find it in Supabase -> cameras table, or leave as-is.
@@ -37,7 +38,7 @@ CAMERA_ID = "89a69e50-9f46-46e7-a8e5-3304f54a34a6"
 MODEL_PATH = "models/best.pt"
 
 # ESP32 serial flood sensor (see sensor.cpp)
-SERIAL_PORT = "COM3"          # Windows COM port for the ESP32
+SERIAL_PORT = "COM6"          # Windows COM port for the ESP32
 SERIAL_BAUD = 9600            # must match sensor.cpp (Serial.begin(9600))
 SENSOR_ENABLED = True         # set False to disable serial reading
 
@@ -47,8 +48,11 @@ DANGER_THRESHOLD_CM = 40.0
 
 # Detection tuning
 CONFIDENCE_THRESHOLD = 0.5    # min YOLO confidence
+YOLO_IMGSZ = 1280             # YOLO inference size (higher = better for small plates)
 OCR_EVERY_N_FRAMES = 5        # run OCR every N frames to save compute
 MIN_PLATE_LEN = 5             # min cleaned plate length to accept
+OCR_CONF_THRESHOLD = 0.35     # min EasyOCR confidence to accept a plate
+OCR_UPSCALE = 3               # upscale factor before OCR (improves accuracy)
 DEDUP_SECONDS = 2.0           # min gap between pushes of the same plate
 FLOOD_PUSH_INTERVAL = 3.0     # seconds between flood_readings inserts
 ALERT_INTERVAL_SECONDS = 30.0 # re-alert all vehicles every 30s while flooding
@@ -385,6 +389,29 @@ class SupabaseClient:
 
 
 # -----------------------------------------------------------------------------
+# OCR preprocessing helper
+# -----------------------------------------------------------------------------
+def preprocess_plate(plate):
+    """Upscale and enhance a cropped plate for better OCR accuracy."""
+    if plate is None or plate.size == 0:
+        return plate
+    # Upscale to improve OCR on small/low-res crops
+    h, w = plate.shape[:2]
+    if OCR_UPSCALE > 1:
+        plate = cv2.resize(
+            plate,
+            (w * OCR_UPSCALE, h * OCR_UPSCALE),
+            interpolation=cv2.INTER_CUBIC,
+        )
+    # Convert to grayscale and increase contrast
+    gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+    gray = cv2.equalizeHist(gray)
+    # Light denoise
+    gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+    return gray
+
+
+# -----------------------------------------------------------------------------
 # Main pipeline
 # -----------------------------------------------------------------------------
 def main():
@@ -407,8 +434,13 @@ def main():
         print(f"[AI] YOLO weights not found at {model_path}. Place best.pt there.")
         sys.exit(1)
 
+    # Auto-detect compute device (GPU if available, else CPU)
+    device = 0 if (HAS_TORCH and torch.cuda.is_available()) else "cpu"
+    print(f"[AI] Using compute device: {device}")
+
     print(f"[AI] Loading YOLO model from {model_path}...")
     model = YOLO(model_path)
+    model.to(device)
 
     # 2. Load EasyOCR (auto-detect GPU)
     if not HAS_EASYOCR:
@@ -462,8 +494,8 @@ def main():
             # Alert all registered vehicles when flooding (re-alerts every 30s)
             client.push_flood_alerts(depth_cm)
 
-            # YOLO detection
-            results = model(frame)
+            # YOLO detection (higher imgsz for small plates)
+            results = model(frame, imgsz=YOLO_IMGSZ, device=device)
             for result in results:
                 for box in result.boxes:
                     confidence = float(box.conf[0])
@@ -478,11 +510,18 @@ def main():
                     # OCR every N frames
                     plate_text = last_plate
                     if frame_count % OCR_EVERY_N_FRAMES == 0:
-                        ocr = reader.readtext(plate)
+                        # Preprocess (upscale + enhance) for better OCR
+                        processed = preprocess_plate(plate)
+                        ocr = reader.readtext(processed)
                         if len(ocr) > 0:
                             new_text = ocr[0][1]
+                            ocr_conf = float(ocr[0][2])
                             cleaned = re.sub(r"[^A-Z0-9]", "", new_text.upper())
-                            if len(cleaned) >= MIN_PLATE_LEN:
+                            # Only accept if confidence is high enough
+                            if (
+                                len(cleaned) >= MIN_PLATE_LEN
+                                and ocr_conf >= OCR_CONF_THRESHOLD
+                            ):
                                 last_plate = cleaned
                                 plate_text = cleaned
 
