@@ -578,3 +578,71 @@ def test_dashboard_distinguishes_rejection_from_pending():
     # The two states are mutually distinguishable.
     assert (rejected.pending_ocr_job >= 0) != (pending.pending_ocr_job >= 0)
     assert bool(rejected.last_reject_reason) != bool(pending.last_reject_reason)
+
+
+# -----------------------------------------------------------------------------
+# OCR character-confusion correction
+# -----------------------------------------------------------------------------
+def test_confusion_variants_generates_single_char_replacements():
+    variants = list(anpr._confusion_variants("WKV8363"))
+    # "W" has a confusion mapping (-> U), so one variant is produced.
+    assert "UKV8363" in variants
+    # Only one character is changed at a time.
+    for v in variants:
+        assert sum(a != b for a, b in zip(v, "WKV8363")) == 1
+
+
+def test_correct_plate_confusions_registered_unchanged():
+    # A plate that is already registered is returned unchanged.
+    plate, bonus = anpr.correct_plate_confusions("WKV8363", ["WKV8363"])
+    assert plate == "WKV8363"
+    assert bonus == 0.0
+
+
+def test_correct_plate_confusions_single_match():
+    # "UKV8363" (U misread for W) corrects to the registered "WKV8363".
+    plate, bonus = anpr.correct_plate_confusions(
+        "UKV8363", ["WKV8363", "SAB1234A"]
+    )
+    assert plate == "WKV8363"
+    assert bonus == anpr.OCR_CONFUSION_BONUS
+
+
+def test_correct_plate_confusions_no_match_unchanged():
+    # No registered plate matches any variant, so nothing is guessed.
+    plate, bonus = anpr.correct_plate_confusions("UKV8363", ["SAB1234A"])
+    assert plate == "UKV8363"
+    assert bonus == 0.0
+
+
+def test_correct_plate_confusions_multiple_matches_unchanged():
+    # Two different registered plates both match variants -> ambiguous, no guess.
+    plate, bonus = anpr.correct_plate_confusions(
+        "UKV8363", ["WKV8363", "UKV8363"]
+    )
+    assert plate == "UKV8363"
+    assert bonus == 0.0
+
+
+def test_correct_plate_confusions_empty_registered():
+    plate, bonus = anpr.correct_plate_confusions("UKV8363", [])
+    assert plate == "UKV8363"
+    assert bonus == 0.0
+
+
+def test_select_best_candidate_corrects_confusion():
+    # OCR reads "UKV8363" (U for W) but "WKV8363" is registered. The corrected
+    # plate should win even though the misread has slightly higher confidence.
+    candidates = [("UKV8363", 0.90), ("WKV8363", 0.85)]
+    plate, conf = anpr.select_best_candidate(candidates, ["WKV8363"])
+    assert plate == "WKV8363"
+    # The misread (0.90) is corrected to WKV8363 and gets the bonus.
+    assert conf == pytest.approx(0.90 + anpr.OCR_CONFUSION_BONUS)
+
+
+def test_select_best_candidate_no_registered_keeps_misread():
+    # Without the registered list, the misread is kept as-is.
+    candidates = [("UKV8363", 0.90), ("WKV8363", 0.85)]
+    plate, conf = anpr.select_best_candidate(candidates)
+    assert plate == "UKV8363"
+    assert conf == pytest.approx(0.90)

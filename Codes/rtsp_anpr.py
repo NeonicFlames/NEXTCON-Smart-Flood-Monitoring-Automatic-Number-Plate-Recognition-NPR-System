@@ -52,6 +52,10 @@ MAX_DETECTION_FPS = 10          # ~10 detection operations per second
 
 # OCR
 OCR_CONFIDENCE_THRESHOLD = 0.40
+# Confidence bonus applied when a single-character OCR confusion is corrected
+# to a known registered plate. This nudges the corrected plate above the
+# threshold and helps it win consensus over the misread.
+OCR_CONFUSION_BONUS = 0.15
 OCR_HISTORY_SIZE = 5
 OCR_MIN_MATCHES = 3
 OCR_CONFIRMATION_RATIO = 0.60
@@ -528,6 +532,80 @@ def validate_malaysian_plate(text):
     return ""
 
 
+# -----------------------------------------------------------------------------
+# OCR character-confusion correction
+# -----------------------------------------------------------------------------
+# EasyOCR frequently confuses visually similar characters on licence plates.
+# Each entry maps a misread character to the character(s) it is most likely to
+# actually be. This is used to correct single-character OCR misreads (e.g. a
+# "U" that should really be a "W") when the corrected plate matches a known
+# registered vehicle. Corrections are only applied to the letter prefix of a
+# plate, never to the digits, because digit misreads are far less common and
+# correcting them risks false positives.
+OCR_CONFUSIONS = {
+    "U": "W",   # U <-> W (very common on Malaysian plates)
+    "W": "U",
+    "0": "O",   # zero <-> letter O
+    "O": "0",
+    "1": "I",   # one <-> letter I
+    "I": "1",
+    "8": "B",   # eight <-> letter B
+    "B": "8",
+    "5": "S",   # five <-> letter S
+    "S": "5",
+    "2": "Z",   # two <-> letter Z
+    "Z": "2",
+    "6": "G",   # six <-> letter G
+    "G": "6",
+    "4": "A",   # four <-> letter A
+    "A": "4",
+    "7": "T",   # seven <-> letter T
+    "T": "7",
+    "3": "E",   # three <-> letter E
+    "E": "3",
+    "9": "G",   # nine <-> letter G
+    "G": "9",
+}
+
+
+def _confusion_variants(plate):
+    """Yield single-character confusion variants of a normalized plate.
+
+    For each character position, if that character has a known confusion
+    mapping, yield the plate with that single character replaced by its
+    confusion counterpart. Only one character is changed at a time so that
+    genuine plates are never over-corrected.
+    """
+    for i, ch in enumerate(plate):
+        replacement = OCR_CONFUSIONS.get(ch)
+        if replacement:
+            yield plate[:i] + replacement + plate[i + 1:]
+
+
+def correct_plate_confusions(plate, registered):
+    """Correct a single-character OCR misread against known registered plates.
+
+    ``plate`` is a normalized, validated plate string. ``registered`` is an
+    iterable of normalized registered plate strings (ground truth).
+
+    If the plate itself is registered, it is returned unchanged. Otherwise, if
+    exactly one single-character confusion variant matches a registered plate,
+    that registered plate is returned (with a small confidence bonus). If zero
+    or multiple variants match, the original plate is returned unchanged so we
+    never guess.
+
+    Returns (corrected_plate, corrected_confidence_bonus).
+    """
+    if not plate or not registered:
+        return plate, 0.0
+    if plate in registered:
+        return plate, 0.0
+    matches = [v for v in _confusion_variants(plate) if v in registered]
+    if len(matches) == 1:
+        return matches[0], OCR_CONFUSION_BONUS
+    return plate, 0.0
+
+
 def parse_easyocr_result(result):
     """Extract (text, confidence) candidates from an EasyOCR result.
 
@@ -547,13 +625,20 @@ def parse_easyocr_result(result):
     return candidates
 
 
-def select_best_candidate(candidates):
+def select_best_candidate(candidates, registered=None):
     """Select the highest-confidence valid Malaysian plate from candidates.
 
     Candidates are (text, confidence) tuples. Each is normalized and validated
     independently; identical normalized plates are deduplicated (keeping the
     highest confidence). Candidates are never concatenated.
+
+    ``registered`` is an optional iterable of normalized registered plate
+    strings. When provided, single-character OCR confusion misreads (e.g. a
+    "U" that should be a "W") are corrected against the registered list, and
+    the corrected plate receives a small confidence bonus so it can win over
+    the misread.
     """
+    registered = set(registered) if registered else set()
     best = {}
     for text, confidence in candidates:
         plate = validate_malaysian_plate(text)
@@ -563,6 +648,11 @@ def select_best_candidate(candidates):
             confidence = float(confidence)
         except (TypeError, ValueError):
             continue
+        # Correct single-character OCR confusions against registered plates.
+        corrected, bonus = correct_plate_confusions(plate, registered)
+        if corrected != plate:
+            plate = corrected
+            confidence += bonus
         if plate not in best or confidence > best[plate]:
             best[plate] = confidence
     if not best:
@@ -608,12 +698,15 @@ def preprocess_plate(crop, upscale=OCR_UPSCALE):
     return clahe.apply(gray)
 
 
-def _run_ocr(reader, image):
+def _run_ocr(reader, image, registered=None):
     """Run EasyOCR on an image.
 
     Returns (valid_plate, valid_confidence, raw_text, raw_confidence).
     raw_text/raw_confidence are the highest-confidence raw OCR reading before
     Malaysian validation, used for diagnostics.
+
+    ``registered`` is an optional iterable of normalized registered plate
+    strings used to correct single-character OCR confusions.
     """
     if image is None or image.size == 0:
         return "", 0.0, "", 0.0
@@ -623,7 +716,7 @@ def _run_ocr(reader, image):
             kwargs["allowlist"] = OCR_ALLOWLIST
         result = reader.readtext(image, **kwargs)
         candidates = parse_easyocr_result(result)
-        plate, conf = select_best_candidate(candidates)
+        plate, conf = select_best_candidate(candidates, registered)
         # Highest-confidence raw reading (any text) for diagnostics.
         raw_text, raw_conf = "", 0.0
         for text, c in candidates:
@@ -635,7 +728,7 @@ def _run_ocr(reader, image):
         return "", 0.0, "", 0.0
 
 
-def recognize_plate(reader, crop):
+def recognize_plate(reader, crop, registered=None):
     """Recognize a plate crop with one main path and one fallback attempt.
 
     The fallback (original colour crop, no CLAHE) runs only when the primary
@@ -643,10 +736,10 @@ def recognize_plate(reader, crop):
 
     Returns (valid_plate, valid_confidence, raw_text, raw_confidence).
     """
-    plate, conf, raw_text, raw_conf = _run_ocr(reader, preprocess_plate(crop))
+    plate, conf, raw_text, raw_conf = _run_ocr(reader, preprocess_plate(crop), registered)
     if plate and conf >= OCR_CONFIDENCE_THRESHOLD:
         return plate, conf, raw_text, raw_conf
-    plate2, conf2, raw2, raw2conf = _run_ocr(reader, crop)
+    plate2, conf2, raw2, raw2conf = _run_ocr(reader, crop, registered)
     if plate2 and conf2 > conf:
         return plate2, conf2, raw2, raw2conf
     # If the primary path read something but it didn't validate, prefer its raw
@@ -666,8 +759,14 @@ class OcrWorker:
         self._lock = threading.Lock()
         self.inference_time = 0.0
         self._stop = threading.Event()
+        self.registered = set()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+
+    def set_registered(self, registered):
+        """Update the set of registered plates used for confusion correction."""
+        with self._lock:
+            self.registered = set(registered) if registered else set()
 
     def submit(self, job_id, crop):
         """Enqueue a crop for OCR. Returns True if accepted, False if dropped."""
@@ -689,7 +788,9 @@ class OcrWorker:
             except queue.Empty:
                 continue
             t0 = time.perf_counter()
-            plate, conf, raw_text, raw_conf = recognize_plate(self.reader, crop)
+            plate, conf, raw_text, raw_conf = recognize_plate(
+                self.reader, crop, self.registered
+            )
             dt = time.perf_counter() - t0
             with self._lock:
                 self.results[job_id] = (plate, conf, raw_text, raw_conf)
@@ -1310,6 +1411,9 @@ def main():
     supabase_worker = SupabaseWorker(client)
     yolo_worker = YoloWorker(model, yolo_device, YOLO_IMAGE_SIZE, MAX_DETECTION_FPS)
     ocr_worker = OcrWorker(reader)
+    # Feed the registered-vehicle list to the OCR worker so it can correct
+    # single-character OCR confusions (e.g. U read as W) against ground truth.
+    ocr_worker.set_registered(client.registered_vehicles.keys())
 
     camera = CameraCapture(RTSP_URL)
     log.info("Camera source configured (credentials hidden).")
