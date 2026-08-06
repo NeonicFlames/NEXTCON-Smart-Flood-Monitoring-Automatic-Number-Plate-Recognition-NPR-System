@@ -36,13 +36,17 @@ from pathlib import Path
 # -----------------------------------------------------------------------------
 # 1. CONFIGURATION
 # -----------------------------------------------------------------------------
-RTSP_URL = "rtsp://admin:camera2cd@192.168.0.59:554/Streaming/Channels/102"
+RTSP_URL = "rtsp://admin:camera2cd@192.168.0.59:554/Streaming/Channels/101"
 CAMERA_ID = "89a69e50-9f46-46e7-a8e5-3304f54a34a6"
 MODEL_PATH = "models/best.pt"
 OUTPUT_DIR = "ocr_output"
 
+# Display window scale (0 < scale <= 1). The live frame is downscaled for the
+# window so it fits on screen; detection/OCR still run on the full frame.
+DISPLAY_SCALE = 0.5
+
 # YOLO detection
-YOLO_CONFIDENCE = 0.5
+YOLO_CONFIDENCE = 0.35
 YOLO_IMAGE_SIZE = 640
 MAX_DETECTION_FPS = 10          # ~10 detection operations per second
 
@@ -52,9 +56,25 @@ OCR_HISTORY_SIZE = 5
 OCR_MIN_MATCHES = 3
 OCR_CONFIRMATION_RATIO = 0.60
 OCR_UPSCALE = 3
-OCR_MIN_CROP_WIDTH = 60
-OCR_MIN_CROP_HEIGHT = 18
-OCR_MIN_SHARPNESS = 20.0
+# EasyOCR recognition model. Default is "english_g2". Alternatives include
+# "latin_g2" and other EasyOCR recognition networks. See EasyOCR docs.
+OCR_RECOG_MODEL = "english_g2"
+# Restrict OCR output to these characters. For licence plates, restricting to
+# A-Z0-9 dramatically improves recognition by preventing punctuation/symbols
+# from being output (which would otherwise fail Malaysian plate validation).
+# Set to None to allow all characters.
+OCR_ALLOWLIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+# Absolute minimum crop size (below this the crop is rejected as too small).
+OCR_ABSOLUTE_MIN_CROP_WIDTH = 24
+OCR_ABSOLUTE_MIN_CROP_HEIGHT = 8
+# Preferred crop size. Crops below this are still accepted but marked for
+# increased upscaling.
+OCR_PREFERRED_CROP_WIDTH = 60
+OCR_PREFERRED_CROP_HEIGHT = 18
+# Sharpness thresholds. Small crops get a more lenient threshold because the
+# Laplacian variance is unreliable on very small images.
+OCR_MIN_SHARPNESS = 10.0
+OCR_SMALL_CROP_MIN_SHARPNESS = 4.0
 OCR_MIN_BRIGHTNESS = 15.0
 OCR_MAX_BRIGHTNESS = 245.0
 
@@ -225,6 +245,16 @@ class TrackState:
     confirmed_matches: int = 0
     confirmed_samples: int = 0
     confirmed_ratio: float = 0.0
+
+    # Raw OCR output (before Malaysian validation) for diagnostics. Lets the
+    # dashboard show what EasyOCR actually read even when it does not yet
+    # validate as a plate.
+    raw_text: str = ""
+    raw_confidence: float = 0.0
+
+    # Last crop-quality rejection reason, for dashboard diagnostics.
+    last_reject_reason: str = ""
+    last_reject_dims: tuple = (0, 0)
 
     def add_reading(self, text, confidence):
         """Record one OCR observation and update consensus metadata.
@@ -404,6 +434,7 @@ class YoloWorker:
         self.latest_result = []
         self.inference_time = 0.0
         self.detection_fps = 0.0
+        self.total_detections = 0
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -446,6 +477,15 @@ class YoloWorker:
             with self._lock:
                 self.latest_result = parsed
                 self.inference_time = dt
+                self.total_detections += len(parsed)
+            # Log when detections appear (throttled) so we can confirm YOLO
+            # is actually finding plates.
+            if parsed:
+                log.info(
+                    "YOLO detected %d plate(s) (conf>=%.2f): %s",
+                    len(parsed), YOLO_CONFIDENCE,
+                    [f"{d.confidence:.2f}" for d in parsed],
+                )
             detections += 1
             now = time.perf_counter()
             if now - window_start >= 1.0:
@@ -489,13 +529,18 @@ def validate_malaysian_plate(text):
 
 
 def parse_easyocr_result(result):
-    """Extract (text, confidence) candidates from an EasyOCR result."""
+    """Extract (text, confidence) candidates from an EasyOCR result.
+
+    EasyOCR's readtext() returns a list of (bbox, text, confidence) tuples,
+    so item[1] is the text string and item[2] is the confidence.
+    """
     candidates = []
     if not result:
         return candidates
     for item in result:
         try:
-            text, conf = item[1]
+            text = item[1]
+            conf = item[2]
             candidates.append((str(text), float(conf)))
         except (TypeError, ValueError, IndexError):
             continue
@@ -526,32 +571,68 @@ def select_best_candidate(candidates):
     return plate, float(confidence)
 
 
+def plate_upscale(width, height):
+    """Return the upscale factor for a plate crop.
+
+    Small crops (below the preferred size) get a larger adaptive upscale so
+    readable but low-resolution plates are not lost. Capped to avoid
+    excessive memory usage.
+    """
+    if width < OCR_PREFERRED_CROP_WIDTH or height < OCR_PREFERRED_CROP_HEIGHT:
+        return min(max(OCR_UPSCALE, 4), 6)
+    return OCR_UPSCALE
+
+
 def preprocess_plate(crop, upscale=OCR_UPSCALE):
-    """Single main preprocessing path: grayscale -> upscale -> CLAHE."""
+    """Single main preprocessing path: grayscale -> upscale -> CLAHE.
+
+    Small crops (below the preferred size) are upscaled more aggressively so
+    that readable but low-resolution plates are not lost. Only the cropped
+    plate image is resized, never the full camera frame.
+    """
     if crop is None or crop.size == 0:
         return None
     if len(crop.shape) == 2:
         gray = crop
     else:
         gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+    # Use a larger adaptive upscale for small crops, capped to avoid
+    # excessive memory usage.
+    if w < OCR_PREFERRED_CROP_WIDTH or h < OCR_PREFERRED_CROP_HEIGHT:
+        upscale = max(upscale, 4)
+    upscale = min(upscale, 6)
     if upscale > 1:
-        h, w = gray.shape
         gray = cv2.resize(gray, (w * upscale, h * upscale), interpolation=cv2.INTER_CUBIC)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     return clahe.apply(gray)
 
 
 def _run_ocr(reader, image):
-    """Run EasyOCR on an image and return the best valid plate/confidence."""
+    """Run EasyOCR on an image.
+
+    Returns (valid_plate, valid_confidence, raw_text, raw_confidence).
+    raw_text/raw_confidence are the highest-confidence raw OCR reading before
+    Malaysian validation, used for diagnostics.
+    """
     if image is None or image.size == 0:
-        return "", 0.0
+        return "", 0.0, "", 0.0
     try:
-        result = reader.readtext(image)
+        kwargs = {}
+        if OCR_ALLOWLIST:
+            kwargs["allowlist"] = OCR_ALLOWLIST
+        result = reader.readtext(image, **kwargs)
         candidates = parse_easyocr_result(result)
-        return select_best_candidate(candidates)
+        plate, conf = select_best_candidate(candidates)
+        # Highest-confidence raw reading (any text) for diagnostics.
+        raw_text, raw_conf = "", 0.0
+        for text, c in candidates:
+            if c > raw_conf:
+                raw_text, raw_conf = text, c
+        return plate, conf, raw_text, raw_conf
     except Exception as exc:
         log.warning("OCR recognition warning: %s: %s", type(exc).__name__, exc)
-        return "", 0.0
+        return "", 0.0, "", 0.0
 
 
 def recognize_plate(reader, crop):
@@ -559,14 +640,20 @@ def recognize_plate(reader, crop):
 
     The fallback (original colour crop, no CLAHE) runs only when the primary
     path produces no text or confidence below the threshold.
+
+    Returns (valid_plate, valid_confidence, raw_text, raw_confidence).
     """
-    text, conf = _run_ocr(reader, preprocess_plate(crop))
-    if text and conf >= OCR_CONFIDENCE_THRESHOLD:
-        return text, conf
-    text2, conf2 = _run_ocr(reader, crop)
-    if text2 and conf2 > conf:
-        return text2, conf2
-    return text, conf
+    plate, conf, raw_text, raw_conf = _run_ocr(reader, preprocess_plate(crop))
+    if plate and conf >= OCR_CONFIDENCE_THRESHOLD:
+        return plate, conf, raw_text, raw_conf
+    plate2, conf2, raw2, raw2conf = _run_ocr(reader, crop)
+    if plate2 and conf2 > conf:
+        return plate2, conf2, raw2, raw2conf
+    # If the primary path read something but it didn't validate, prefer its raw
+    # text for diagnostics; otherwise use the fallback's raw text.
+    if raw_text:
+        return plate, conf, raw_text, raw_conf
+    return plate, conf, raw2, raw2conf
 
 
 class OcrWorker:
@@ -602,10 +689,10 @@ class OcrWorker:
             except queue.Empty:
                 continue
             t0 = time.perf_counter()
-            text, conf = recognize_plate(self.reader, crop)
+            plate, conf, raw_text, raw_conf = recognize_plate(self.reader, crop)
             dt = time.perf_counter() - t0
             with self._lock:
-                self.results[job_id] = (text, conf)
+                self.results[job_id] = (plate, conf, raw_text, raw_conf)
                 self.inference_time = dt
         log.info("OCR worker stopped.")
 
@@ -618,7 +705,13 @@ class OcrWorker:
 # CROP QUALITY
 # -----------------------------------------------------------------------------
 def evaluate_crop_quality(plate_crop):
-    """Return a dict describing crop quality and whether OCR should run."""
+    """Return a dict describing crop quality and whether OCR should run.
+
+    Crops below the absolute minimum are rejected as too small. Crops between
+    the absolute minimum and the preferred size are accepted but marked with
+    ``needs_upscale`` so the preprocessing step applies a larger upscale.
+    Small crops also get a more lenient sharpness threshold.
+    """
     result = {
         "accepted": False,
         "reason": "",
@@ -626,6 +719,7 @@ def evaluate_crop_quality(plate_crop):
         "height": 0,
         "brightness": 0.0,
         "sharpness": 0.0,
+        "needs_upscale": False,
     }
     if plate_crop is None or plate_crop.size == 0:
         result["reason"] = "empty"
@@ -633,7 +727,10 @@ def evaluate_crop_quality(plate_crop):
     height, width = plate_crop.shape[:2]
     result["width"] = width
     result["height"] = height
-    if width < OCR_MIN_CROP_WIDTH or height < OCR_MIN_CROP_HEIGHT:
+    if (
+        width < OCR_ABSOLUTE_MIN_CROP_WIDTH
+        or height < OCR_ABSOLUTE_MIN_CROP_HEIGHT
+    ):
         result["reason"] = "too_small"
         return result
     gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
@@ -647,9 +744,17 @@ def evaluate_crop_quality(plate_crop):
         return result
     sharpness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
     result["sharpness"] = sharpness
-    if sharpness < OCR_MIN_SHARPNESS:
+    # Small crops get a more lenient sharpness threshold because the
+    # Laplacian variance is unreliable on very small images.
+    is_small = (
+        width < OCR_PREFERRED_CROP_WIDTH
+        or height < OCR_PREFERRED_CROP_HEIGHT
+    )
+    min_sharpness = OCR_SMALL_CROP_MIN_SHARPNESS if is_small else OCR_MIN_SHARPNESS
+    if sharpness < min_sharpness:
         result["reason"] = "blurry"
         return result
+    result["needs_upscale"] = is_small
     result["accepted"] = True
     return result
 
@@ -1061,6 +1166,7 @@ def draw_status_overlay(frame, camera, yolo, ocr, depth_cm, display_fps, sensor_
         f"DISPLAY FPS: {display_fps:.1f}",
         f"DETECTION FPS: {yolo.detection_fps:.1f}",
         f"YOLO TIME: {yolo.inference_time * 1000:.0f} ms",
+        f"YOLO DETECTIONS: {yolo.total_detections}",
         f"OCR TIME: {ocr.inference_time * 1000:.0f} ms",
         f"DROPPED FRAMES: {camera.frames.dropped}",
         f"SENSOR: {sensor_state}",
@@ -1078,6 +1184,77 @@ def draw_status_overlay(frame, camera, yolo, ocr, depth_cm, display_fps, sensor_
 def sanitize_filename(text):
     """Sanitize plate text for use in a filename."""
     return re.sub(r"[^A-Z0-9]", "", str(text).upper())
+
+
+def draw_ocr_dashboard(frame, tracker, client):
+    """Draw a simple OCR dashboard panel on the right side of the frame.
+
+    Lists every active plate track with its current OCR status, plate text,
+    confidence, vote count and registration label. Confirmed plates are shown
+    in green, provisional ones in yellow.
+    """
+    h, w = frame.shape[:2]
+    panel_w = 340
+    x0 = w - panel_w - 8
+    y0 = 8
+    title = "OCR DASHBOARD"
+    header_h = 34
+    row_h = 26
+    tracks = list(tracker.tracks.items())
+    panel_h = header_h + len(tracks) * row_h + 16
+
+    # Semi-transparent panel background.
+    overlay = frame.copy()
+    cv2.rectangle(overlay, (x0, y0), (x0 + panel_w, y0 + panel_h), (0, 0, 0), -1)
+    cv2.addWeighted(overlay, 0.65, frame, 0.35, 0, frame)
+    cv2.rectangle(frame, (x0, y0), (x0 + panel_w, y0 + panel_h), (90, 90, 90), 1)
+
+    draw_text(frame, title, (x0 + 12, y0 + 24), (0, 255, 255), 0.7, 2)
+
+    if not tracks:
+        draw_text(frame, "No plates detected", (x0 + 12, y0 + header_h + 20),
+                  (200, 200, 200), 0.55, 2)
+        return
+
+    for index, (tid, state) in enumerate(tracks):
+        y = y0 + header_h + index * row_h
+        confirmed = bool(state.confirmed_text)
+        text = state.confirmed_text or state.provisional_text
+        if confirmed:
+            color = (0, 220, 0)
+            status = "CONFIRMED"
+        elif text:
+            color = (0, 200, 255)
+            status = "PROVISIONAL"
+        elif state.raw_text:
+            color = (255, 160, 0)
+            status = "OCR READING"
+        elif state.pending_ocr_job >= 0:
+            color = (0, 200, 255)
+            status = "OCR QUEUED"
+        elif state.last_reject_reason:
+            color = (0, 0, 255)
+            status = "CROP TOO SMALL" if state.last_reject_reason == "too_small" else "CROP REJECTED"
+        else:
+            color = (200, 200, 200)
+            status = "PREPARING OCR"
+        conf = state.confirmed_confidence if confirmed else state.provisional_confidence
+        votes = state.confirmed_matches if confirmed else state.provisional_matches
+        samples = state.confirmed_samples if confirmed else state.provisional_samples
+        plate_display = text if text else (state.raw_text if state.raw_text else "---")
+        reg = client.registration_label(plate_display) if text else ""
+        line1 = f"#{tid}  {plate_display}  [{status}]"
+        if text:
+            line2 = f"    OCR:{conf:.2f}  VOTE:{votes}/{samples}  {reg}"
+        elif state.raw_text:
+            line2 = f"    RAW:{state.raw_text}  conf:{state.raw_confidence:.2f}"
+        elif state.last_reject_reason:
+            w, h = state.last_reject_dims
+            line2 = f"    {state.last_reject_reason}: {w}x{h}"
+        else:
+            line2 = "    preparing crop for OCR..."
+        draw_text(frame, line1, (x0 + 12, y + 16), color, 0.55, 2)
+        draw_text(frame, line2, (x0 + 12, y + 16 + 16), (235, 235, 235), 0.45, 1)
 
 
 # -----------------------------------------------------------------------------
@@ -1115,8 +1292,15 @@ def main():
 
     # EasyOCR shares the PyTorch CUDA environment.
     ocr_gpu = bool(HAS_TORCH and torch.cuda.is_available())
-    log.info("Initializing EasyOCR (gpu=%s)...", ocr_gpu)
-    reader = easyocr.Reader(["en"], gpu=ocr_gpu)
+    log.info(
+        "Initializing EasyOCR (gpu=%s, model=%s, allowlist=%s)...",
+        ocr_gpu, OCR_RECOG_MODEL, "A-Z0-9" if OCR_ALLOWLIST else "all",
+    )
+    reader = easyocr.Reader(
+        ["en"],
+        gpu=ocr_gpu,
+        recog_network=OCR_RECOG_MODEL,
+    )
     log.info("EasyOCR initialized.")
 
     sensor = FloodSensor()
@@ -1139,6 +1323,8 @@ def main():
     display_frames = 0
     display_window_start = time.perf_counter()
     last_display_frame = None
+    last_quality_log = 0.0
+    last_submit_log = 0.0
 
     try:
         while True:
@@ -1167,16 +1353,37 @@ def main():
                     continue
                 quality = evaluate_crop_quality(padded)
                 if not quality["accepted"]:
+                    state.last_reject_reason = quality["reason"]
+                    state.last_reject_dims = (quality["width"], quality["height"])
+                    # Log the rejection reason (throttled) so the user can see
+                    # why OCR is not running.
+                    if now - last_quality_log > 2.0:
+                        last_quality_log = now
+                        log.warning(
+                            "Track %s crop rejected: %s (%dx%d)",
+                            tid, quality["reason"], quality["width"],
+                            quality["height"],
+                        )
                     continue
                 # Keep the sharpest crop for saving on confirmation.
                 if quality["sharpness"] > state.best_sharpness:
                     state.best_crop = padded.copy()
                     state.best_sharpness = quality["sharpness"]
+                upscale = plate_upscale(quality["width"], quality["height"])
+                if now - last_submit_log > 2.0:
+                    last_submit_log = now
+                    log.info(
+                        "Track %s crop accepted: %dx%d, upscale=%d",
+                        tid, quality["width"], quality["height"], upscale,
+                    )
                 job_counter += 1
                 job_id = job_counter
                 if ocr_worker.submit(job_id, padded):
                     state.pending_ocr_job = job_id
                     state.last_ocr_time = now
+                    if now - last_submit_log > 2.0:
+                        last_submit_log = now
+                        log.info("Track %s OCR job queued: %d", tid, job_id)
 
             # Poll OCR results and update consensus.
             for tid, state in tracker.tracks.items():
@@ -1186,8 +1393,23 @@ def main():
                 if result is None:
                     continue
                 state.pending_ocr_job = -1
-                text, conf = result
+                text, conf, raw_text, raw_conf = result
+                # Always record what EasyOCR actually read, for diagnostics.
+                if raw_text:
+                    state.raw_text = raw_text
+                    state.raw_confidence = raw_conf
+                if now - last_submit_log > 2.0:
+                    last_submit_log = now
+                    log.info(
+                        "Track %s OCR completed: raw='%s', confidence=%.2f",
+                        tid, raw_text, raw_conf,
+                    )
                 if not text or conf < OCR_CONFIDENCE_THRESHOLD:
+                    if raw_text and not text:
+                        log.info(
+                            "OCR read '%s' (conf=%.2f) but it did not validate as a plate.",
+                            raw_text, raw_conf,
+                        )
                     continue
                 newly_confirmed = state.add_reading(text, conf)
                 if newly_confirmed:
@@ -1222,8 +1444,22 @@ def main():
             # Draw on the newest frame.
             if last_display_frame is not None:
                 display = last_display_frame.copy()
+                # Downscale for the window. Boxes are in full-frame
+                # coordinates, so scale them to match the display.
+                scale = DISPLAY_SCALE
+                if scale != 1.0:
+                    display = cv2.resize(
+                        display,
+                        (int(display.shape[1] * scale), int(display.shape[0] * scale)),
+                        interpolation=cv2.INTER_AREA,
+                    )
                 for tid, state in tracker.tracks.items():
                     x1, y1, x2, y2 = state.last_bbox
+                    if scale != 1.0:
+                        x1, y1, x2, y2 = (
+                            int(x1 * scale), int(y1 * scale),
+                            int(x2 * scale), int(y2 * scale),
+                        )
                     confirmed = bool(state.confirmed_text)
                     color = (0, 220, 0) if confirmed else (0, 200, 255)
                     cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
@@ -1240,6 +1476,7 @@ def main():
                     display, camera, yolo_worker, ocr_worker,
                     sensor.get_depth_cm(), display_fps, sensor.connected,
                 )
+                draw_ocr_dashboard(display, tracker, client)
                 cv2.imshow("ANPR + Flood", display)
 
             # Flood readings/alerts through the Supabase worker.

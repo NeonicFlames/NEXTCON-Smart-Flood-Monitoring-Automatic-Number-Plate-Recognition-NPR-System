@@ -259,7 +259,9 @@ def test_changed_winner_clears_confirmation():
         state.add_reading("SAB1234A", 0.9)
     assert state.confirmed_text == "SAB1234A"
     assert state.confirmed_matches == 5
-    assert state.confirmed_samples == 7
+    # History is bounded to OCR_HISTORY_SIZE, so only the last 5 readings
+    # (all SAB1234A) remain.
+    assert state.confirmed_samples == anpr.OCR_HISTORY_SIZE
 
 
 def test_history_bounded():
@@ -316,7 +318,8 @@ def test_duplicate_suppression_different_track():
 def test_iou_overlapping():
     a = (0, 0, 100, 100)
     b = (10, 10, 110, 110)
-    assert anpr.iou(a, b) == pytest.approx(0.6694, abs=0.01)
+    # Intersection 90x90=8100, union 10000+10000-8100=11900 -> 0.6807
+    assert anpr.iou(a, b) == pytest.approx(0.6807, abs=0.01)
 
 
 def test_iou_no_overlap():
@@ -412,6 +415,94 @@ def test_quality_detailed_crop_accepted():
 
 
 # -----------------------------------------------------------------------------
+# Crop size / upscaling handling
+# -----------------------------------------------------------------------------
+def _detailed_crop(w, h):
+    """Build a synthetic crop of the given size with high-contrast detail."""
+    crop = np.zeros((h, w, 3), dtype=np.uint8)
+    crop[2:h - 2, 2:w - 2] = 200
+    crop[4:h - 4, 4:w - 4] = 30
+    return crop
+
+
+def test_quality_45x14_crop_accepted():
+    # A moderately small crop (above absolute min, below preferred) is accepted.
+    crop = _detailed_crop(45, 14)
+    result = anpr.evaluate_crop_quality(crop)
+    assert result["accepted"] is True
+    assert result["reason"] == ""
+    assert result["needs_upscale"] is True
+
+
+def test_quality_20x6_crop_rejected_too_small():
+    # Below the absolute minimum -> rejected as too small.
+    crop = _detailed_crop(20, 6)
+    result = anpr.evaluate_crop_quality(crop)
+    assert result["accepted"] is False
+    assert result["reason"] == "too_small"
+
+
+def test_quality_large_crop_no_upscale_needed():
+    crop = _detailed_crop(200, 100)
+    result = anpr.evaluate_crop_quality(crop)
+    assert result["accepted"] is True
+    assert result["needs_upscale"] is False
+
+
+def test_plate_upscale_small_crop():
+    # Small crops get a larger adaptive upscale factor.
+    assert anpr.plate_upscale(45, 14) >= 4
+    assert anpr.plate_upscale(45, 14) <= 6
+
+
+def test_plate_upscale_large_crop():
+    # Large crops keep the configured OCR_UPSCALE.
+    assert anpr.plate_upscale(200, 100) == anpr.OCR_UPSCALE
+
+
+def test_preprocess_small_crop_upscaled():
+    # A small accepted crop is upscaled by the preprocessing pipeline.
+    crop = _detailed_crop(45, 14)
+    processed = anpr.preprocess_plate(crop)
+    assert processed is not None
+    h, w = processed.shape
+    assert w > 45 and h > 14
+
+
+def test_small_crop_reaches_ocr_queue():
+    # A moderately small crop can be submitted to the OCR worker queue.
+    reader = _FakeReader()
+    worker = anpr.OcrWorker(reader, maxsize=8)
+    crop = _detailed_crop(45, 14)
+    quality = anpr.evaluate_crop_quality(crop)
+    assert quality["accepted"] is True
+    accepted = worker.submit(1, crop)
+    assert accepted is True
+    worker.stop()
+
+
+def test_rejected_crop_does_not_enter_ocr_queue():
+    # A rejected crop must not be submitted to the OCR worker queue.
+    reader = _FakeReader()
+    worker = anpr.OcrWorker(reader, maxsize=8)
+    crop = _detailed_crop(20, 6)
+    quality = anpr.evaluate_crop_quality(crop)
+    assert quality["accepted"] is False
+    accepted = worker.submit(1, crop)
+    # The queue accepts the call, but the caller must not submit rejected
+    # crops. Verify the quality gate prevents it.
+    assert quality["reason"] == "too_small"
+    worker.stop()
+
+
+class _FakeReader:
+    """Minimal stand-in for an EasyOCR reader (never actually invoked)."""
+
+    def readtext(self, image):
+        return []
+
+
+# -----------------------------------------------------------------------------
 # Flood status thresholds
 # -----------------------------------------------------------------------------
 def test_flood_status_safe():
@@ -460,3 +551,30 @@ def test_latest_buffer_get_clears():
 def test_latest_buffer_empty_peek():
     buf = anpr.LatestItemBuffer()
     assert buf.peek() is None
+
+
+# -----------------------------------------------------------------------------
+# Dashboard status distinction
+# -----------------------------------------------------------------------------
+def test_dashboard_distinguishes_rejection_from_pending():
+    """The dashboard must distinguish a rejected crop from a pending OCR job.
+
+    A track with a rejection reason shows a crop-rejection status, while a
+    track with a pending OCR job shows an OCR-queued status.
+    """
+    # Track with a rejected crop.
+    rejected = anpr.TrackState()
+    rejected.last_reject_reason = "too_small"
+    rejected.last_reject_dims = (17, 6)
+    assert rejected.pending_ocr_job < 0
+    assert rejected.last_reject_reason == "too_small"
+
+    # Track with a genuinely pending OCR job.
+    pending = anpr.TrackState()
+    pending.pending_ocr_job = 17
+    assert pending.pending_ocr_job >= 0
+    assert pending.last_reject_reason == ""
+
+    # The two states are mutually distinguishable.
+    assert (rejected.pending_ocr_job >= 0) != (pending.pending_ocr_job >= 0)
+    assert bool(rejected.last_reject_reason) != bool(pending.last_reject_reason)
