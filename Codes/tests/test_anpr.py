@@ -1,6 +1,7 @@
-"""Unit tests for the Malaysian ANPR pipeline pure functions and state logic.
+"""Unit tests for the rebuilt Malaysian ANPR pipeline pure functions and state
+logic.
 
-These tests require no camera, Supabase, serial port, YOLO weights, PaddleOCR
+These tests require no camera, Supabase, serial port, YOLO weights, EasyOCR
 model downloads, CUDA, or internet access. They use mocks and pure functions.
 """
 
@@ -11,7 +12,7 @@ import numpy as np
 import pytest
 
 # Make the module under test importable without triggering heavy optional
-# dependencies (cv2 is required; YOLO/PaddleOCR are optional and guarded).
+# dependencies (cv2 is required; YOLO/EasyOCR are optional and guarded).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import rtsp_anpr as anpr  # noqa: E402
@@ -44,6 +45,7 @@ def test_normalize_plate(raw, expected):
         ("QAA1234A", "QAA1234A"),
         ("B1", "B1"),
         ("FC1", "FC1"),
+        ("ABC1234", "ABC1234"),
     ],
 )
 def test_validate_valid_plates(raw, expected):
@@ -157,45 +159,22 @@ def test_padded_crop_coords_never_exceed_frame():
 # -----------------------------------------------------------------------------
 # OCR candidate selection
 # -----------------------------------------------------------------------------
-def test_select_best_candidate_v2_style():
-    # PaddleOCR 2.x style: list of [box, (text, score)]
-    raw = [
-        [[0, 0, 10, 10], ("WKV8363", 0.91)],
-        [[0, 0, 10, 10], ("TOYOTA", 0.99)],
-    ]
-    candidates = []
-    anpr._collect_ocr_candidates(raw, candidates)
-    text, conf = anpr.select_best_candidate(candidates)
-    assert text == "WKV8363"
-    assert conf == pytest.approx(0.91)
-
-
-def test_select_best_candidate_v3_style():
-    # PaddleOCR 3.x style: dict with rec_texts / rec_scores
-    raw = {"rec_texts": ["WKV8363", "MAL"], "rec_scores": [0.88, 0.99]}
-    candidates = []
-    anpr._collect_ocr_candidates(raw, candidates)
-    text, conf = anpr.select_best_candidate(candidates)
-    assert text == "WKV8363"
-    assert conf == pytest.approx(0.88)
-
-
 def test_select_best_candidate_one_valid():
-    candidates = [("WKV8363", 0.9, 0), ("GARBAGE", 0.99, 1)]
+    candidates = [("WKV8363", 0.9), ("GARBAGE", 0.99)]
     text, conf = anpr.select_best_candidate(candidates)
     assert text == "WKV8363"
     assert conf == pytest.approx(0.9)
 
 
 def test_select_best_candidate_highest_confidence_wins():
-    candidates = [("WKV8363", 0.7, 0), ("SAB1234A", 0.95, 1)]
+    candidates = [("WKV8363", 0.7), ("SAB1234A", 0.95)]
     text, conf = anpr.select_best_candidate(candidates)
     assert text == "SAB1234A"
     assert conf == pytest.approx(0.95)
 
 
 def test_select_best_candidate_dedup_normalized():
-    candidates = [("WKV 8363", 0.7, 0), ("WKV8363", 0.95, 1)]
+    candidates = [("WKV 8363", 0.7), ("WKV8363", 0.95)]
     text, conf = anpr.select_best_candidate(candidates)
     assert text == "WKV8363"
     assert conf == pytest.approx(0.95)
@@ -206,7 +185,7 @@ def test_select_best_candidate_empty():
 
 
 def test_select_best_candidate_malformed():
-    candidates = [("WKV8363", "not-a-number", 0), (None, 0.5, 1)]
+    candidates = [("WKV8363", "not-a-number"), (None, 0.5)]
     text, conf = anpr.select_best_candidate(candidates)
     assert text == ""
     assert conf == 0.0
@@ -214,10 +193,20 @@ def test_select_best_candidate_malformed():
 
 def test_candidates_never_concatenated():
     # Two valid candidates must NOT be joined into one string.
-    candidates = [("WKV", 0.9, 0), ("8363", 0.9, 1)]
+    candidates = [("WKV", 0.9), ("8363", 0.9)]
     text, _ = anpr.select_best_candidate(candidates)
     assert text != "WKV8363"
     assert text == ""  # neither is a valid full plate
+
+
+def test_parse_easyocr_result():
+    raw = [
+        ([[0, 0, 10, 10]], "WKV8363", 0.91),
+        ([[0, 0, 10, 10]], "TOYOTA", 0.99),
+    ]
+    candidates = anpr.parse_easyocr_result(raw)
+    assert ("WKV8363", 0.91) in candidates
+    assert ("TOYOTA", 0.99) in candidates
 
 
 # -----------------------------------------------------------------------------
@@ -287,7 +276,6 @@ def test_equal_vote_counts_deterministic():
     state.add_reading("SAB1234A", 0.9)
     state.add_reading("WKV8363", 0.9)
     state.add_reading("SAB1234A", 0.9)
-    # Both have 2 votes; tie-break by confidence then lexicographic.
     winner = state.provisional_text
     assert winner in ("WKV8363", "SAB1234A")
     # Running again must give the same result.
@@ -295,6 +283,82 @@ def test_equal_vote_counts_deterministic():
     for text in ["WKV8363", "SAB1234A", "WKV8363", "SAB1234A"]:
         state2.add_reading(text, 0.9)
     assert state2.provisional_text == winner
+
+
+# -----------------------------------------------------------------------------
+# Duplicate suppression
+# -----------------------------------------------------------------------------
+def test_duplicate_suppression_same_track():
+    client = anpr.SupabaseClient("", "", enabled=False)
+    # Simulate the dedup logic used by push_detection.
+    plate = "WKV8363"
+    track_id = 1
+    key = (plate, track_id)
+    now = 1000.0
+    client.last_detection_by_plate[key] = now
+    assert now - client.last_detection_by_plate.get(key, 0.0) < anpr.DETECTION_DEDUP_SECONDS
+
+
+def test_duplicate_suppression_different_track():
+    client = anpr.SupabaseClient("", "", enabled=False)
+    plate = "WKV8363"
+    key1 = (plate, 1)
+    key2 = (plate, 2)
+    now = 1000.0
+    client.last_detection_by_plate[key1] = now
+    # Different track id -> not suppressed.
+    assert now - client.last_detection_by_plate.get(key2, 0.0) >= anpr.DETECTION_DEDUP_SECONDS
+
+
+# -----------------------------------------------------------------------------
+# IoU association
+# -----------------------------------------------------------------------------
+def test_iou_overlapping():
+    a = (0, 0, 100, 100)
+    b = (10, 10, 110, 110)
+    assert anpr.iou(a, b) == pytest.approx(0.6694, abs=0.01)
+
+
+def test_iou_no_overlap():
+    a = (0, 0, 10, 10)
+    b = (100, 100, 110, 110)
+    assert anpr.iou(a, b) == 0.0
+
+
+def test_iou_identical():
+    a = (0, 0, 100, 100)
+    assert anpr.iou(a, a) == pytest.approx(1.0)
+
+
+def test_associate_detections_matches_existing():
+    tracks = {1: anpr.TrackState()}
+    tracks[1].last_bbox = (0, 0, 100, 100)
+    detections = [anpr.Detection((5, 5, 95, 95), 0.9)]
+    pairs = anpr.associate_detections(detections, tracks)
+    assert pairs[0][0] == 1
+
+
+def test_associate_detections_new_track():
+    tracks = {}
+    detections = [anpr.Detection((0, 0, 100, 100), 0.9)]
+    pairs = anpr.associate_detections(detections, tracks)
+    assert pairs[0][0] < 0  # new track id
+
+
+def test_tracker_assigns_ids_and_expires():
+    tracker = anpr.PlateTracker(stale_seconds=0.1)
+    now = 100.0
+    tracker.update([anpr.Detection((0, 0, 100, 100), 0.9)], now)
+    assert len(tracker.tracks) == 1
+    tid = next(iter(tracker.tracks))
+    assert tid >= 1
+    # Same box again -> same track.
+    tracker.update([anpr.Detection((0, 0, 100, 100), 0.9)], now + 0.01)
+    assert len(tracker.tracks) == 1
+    assert next(iter(tracker.tracks)) == tid
+    # Expire after stale window.
+    tracker.expire(now + 1.0)
+    assert len(tracker.tracks) == 0
 
 
 # -----------------------------------------------------------------------------
@@ -339,7 +403,6 @@ def test_quality_detailed_crop_accepted():
     # Synthetic crop with high-contrast detail and reasonable brightness.
     crop = np.zeros((100, 200, 3), dtype=np.uint8)
     crop[20:80, 20:180] = 200
-    # Add sharp edges.
     crop[40:60, 40:160] = 30
     result = anpr.evaluate_crop_quality(crop)
     assert result["accepted"] is True
@@ -349,83 +412,51 @@ def test_quality_detailed_crop_accepted():
 
 
 # -----------------------------------------------------------------------------
-# Preprocessing variants
+# Flood status thresholds
 # -----------------------------------------------------------------------------
-def test_variants_invalid_crop_returns_empty():
-    assert anpr.make_plate_variants(None) == []
-    assert anpr.make_plate_variants(np.zeros((0, 0, 3), dtype=np.uint8)) == []
+def test_flood_status_safe():
+    assert anpr.flood_status(0.0) == "SAFE"
+    assert anpr.flood_status(anpr.WARNING_THRESHOLD_CM - 0.1) == "SAFE"
 
 
-def test_variants_original_preserves_color():
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    crop[:, :, 0] = 255  # blue channel
-    variants = anpr.make_plate_variants(crop)
-    names = [name for name, _ in variants]
-    assert names == ["original", "gray", "clahe"]
-    original = variants[0][1]
-    assert original.shape == (50, 100, 3)
-    assert original.dtype == np.uint8
+def test_flood_status_warning():
+    assert anpr.flood_status(anpr.WARNING_THRESHOLD_CM) == "WARNING"
+    assert anpr.flood_status(anpr.DANGER_THRESHOLD_CM - 0.1) == "WARNING"
 
 
-def test_variants_gray_and_clahe_are_bgr():
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    variants = anpr.make_plate_variants(crop)
-    for name, image in variants:
-        assert len(image.shape) == 3, f"{name} not 3-channel"
-        assert image.shape[2] == 3, f"{name} not BGR"
-
-
-def test_variants_upscaled_dimensions():
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    variants = anpr.make_plate_variants(crop)
-    gray = dict(variants)["gray"]
-    clahe = dict(variants)["clahe"]
-    expected_h = 50 * anpr.OCR_UPSCALE
-    expected_w = 100 * anpr.OCR_UPSCALE
-    assert gray.shape[:2] == (expected_h, expected_w)
-    assert clahe.shape[:2] == (expected_h, expected_w)
-
-
-def test_variant_names_stable():
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    variants = anpr.make_plate_variants(crop)
-    assert [name for name, _ in variants] == ["original", "gray", "clahe"]
+def test_flood_status_danger():
+    assert anpr.flood_status(anpr.DANGER_THRESHOLD_CM) == "DANGER"
+    assert anpr.flood_status(100.0) == "DANGER"
 
 
 # -----------------------------------------------------------------------------
-# recognize_best_variant with mocked OCR engine
+# Latest-item buffer behavior
 # -----------------------------------------------------------------------------
-class _MockEngine:
-    def __init__(self, results_by_variant):
-        self.results_by_variant = results_by_variant
-        self.calls = []
+def test_latest_buffer_replaces_old_items():
+    """Prove that a fast producer replaces old items instead of accumulating.
 
-    def predict(self, image):
-        # Identify variant by shape to simulate per-variant results.
-        h, w = image.shape[:2]
-        key = "original" if (h, w) == (50, 100) else "upscaled"
-        self.calls.append(key)
-        return self.results_by_variant.get(key, [])
-
-
-def test_recognize_best_variant_selects_highest():
-    engine = _MockEngine(
-        {
-            "original": [{"rec_texts": ["WKV8363"], "rec_scores": [0.7]}],
-            "upscaled": [{"rec_texts": ["SAB1234A"], "rec_scores": [0.95]}],
-        }
-    )
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    text, conf, variant = anpr.recognize_best_variant(engine, crop)
-    assert text == "SAB1234A"
-    assert conf == pytest.approx(0.95)
-    assert variant == "gray" or variant == "clahe"
+    When the producer is faster than the consumer, put() overwrites the
+    previous item and counts it as dropped, so the buffer never grows.
+    """
+    buf = anpr.LatestItemBuffer()
+    # Producer puts many items before the consumer reads.
+    for i in range(100):
+        buf.put(i)
+    # Only the newest item remains.
+    assert buf.peek() == 99
+    assert buf.dropped == 99
+    # Consumer reads the newest item.
+    assert buf.get(block=False) == 99
+    assert buf.get(block=False) is None
 
 
-def test_recognize_best_variant_all_fail():
-    engine = _MockEngine({})
-    crop = np.zeros((50, 100, 3), dtype=np.uint8)
-    text, conf, variant = anpr.recognize_best_variant(engine, crop)
-    assert text == ""
-    assert conf == 0.0
-    assert variant == ""
+def test_latest_buffer_get_clears():
+    buf = anpr.LatestItemBuffer()
+    buf.put("a")
+    assert buf.get(block=False) == "a"
+    assert buf.get(block=False) is None
+
+
+def test_latest_buffer_empty_peek():
+    buf = anpr.LatestItemBuffer()
+    assert buf.peek() is None

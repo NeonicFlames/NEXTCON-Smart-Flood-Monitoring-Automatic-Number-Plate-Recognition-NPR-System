@@ -1,10 +1,12 @@
 # RTSP ANPR + Flood Monitoring pipeline dependencies
+# NOTE: Install CUDA-enabled PyTorch FIRST using the official PyTorch
+# installation selector (https://pytorch.org/get-started/locally/) so that
+# YOLO and EasyOCR share the same GPU-enabled torch build. Then install the
+# remaining requirements below.
 ultralytics
-lap>=0.5.12
-paddleocr
-paddlepaddle
+easyocr
 opencv-python
-torch
 numpy
 requests
 pyserial
+

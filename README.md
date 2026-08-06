@@ -110,3 +110,109 @@ Ensure you have the following installed on your machine:
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## ANPR + Flood Monitoring Pipeline (`Codes/rtsp_anpr.py`)
+
+A standalone Windows application that reads one RTSP camera, detects licence
+plates with YOLO, recognises Malaysian plates with EasyOCR, confirms plates
+over multiple frames, reads a flood sensor over serial, and pushes readings,
+alerts and confirmed detections to Supabase.
+
+The highest-priority design goal is a **smooth, current, responsive live video
+window**. The camera, display, YOLO, OCR, Supabase and serial sensor never
+block one another. Stale camera frames are dropped rather than displayed late.
+
+### Requirements
+
+- Windows
+- AMD Ryzen 5 3600 (or similar)
+- NVIDIA RTX 2060 (CUDA-enabled PyTorch recommended)
+- One RTSP camera
+- Python 3.10+
+
+### 1. Create a Windows virtual environment
+
+```powershell
+cd Codes
+python -m venv .venv
+```
+
+### 2. Activate it
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install CUDA-enabled PyTorch
+
+Use the **official PyTorch installation selector** at
+<https://pytorch.org/get-started/locally/> and choose your CUDA version. Do
+**not** guess a wheel. For example (CUDA 12.1):
+
+```powershell
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+### 4. Install the remaining requirements
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 5. Create `.env.local`
+
+Copy `Codes/.env.local.example` to `Codes/.env.local` and fill in your
+Supabase project URL and anon key:
+
+```powershell
+Copy-Item .env.local.example .env.local
+```
+
+### 6. Edit the settings at the top of `rtsp_anpr.py`
+
+Set `RTSP_URL`, `CAMERA_ID`, `SERIAL_PORT`, thresholds and other constants in
+the **Configuration** section near the top of the file.
+
+### 7. Place `best.pt` inside `models`
+
+The YOLO weights must be at `models/best.pt` (relative to the project root).
+
+### 8. Run the script
+
+```powershell
+python rtsp_anpr.py
+```
+
+Press `Q` or `ESC` to exit.
+
+### 9. Confirm that CUDA is active
+
+On startup the log prints either `CUDA selected (RTX 2060).` or a
+`CUDA not available; falling back to CPU.` warning. You can also verify from a
+Python prompt:
+
+```powershell
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+### 10. Troubleshooting
+
+- **RTSP**: Confirm the camera is reachable and the URL/credentials are
+  correct. The app auto-reconnects after a disconnect.
+- **CUDA**: Ensure the CUDA-enabled PyTorch wheel matches your installed CUDA
+  driver. Check `nvidia-smi` for the driver CUDA version.
+- **Serial**: Confirm the COM port and baud rate. If the sensor is
+  unavailable the app logs a warning and continues ANPR processing.
+- **Supabase**: Confirm `.env.local` credentials. If Supabase is unavailable
+  the app logs errors and continues local processing.
+
+### Tests
+
+Run the pure-function unit tests (no camera, GPU, serial or internet needed):
+
+```powershell
+python -m pytest -q
+```
+
