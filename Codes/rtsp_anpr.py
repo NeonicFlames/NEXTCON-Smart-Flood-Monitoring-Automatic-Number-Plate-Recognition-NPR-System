@@ -23,6 +23,7 @@ package from PyTorch CUDA availability.
 
 import csv
 import os
+import queue
 import re
 import sys
 import time
@@ -64,6 +65,10 @@ OCR_EVERY_N_FRAMES = 5
 MIN_PLATE_LEN = 5  # kept for legacy metrics; Malaysian validation no longer relies on it
 OCR_CONF_THRESHOLD = 0.35
 OCR_UPSCALE = 3
+# Which preprocessing variants to run OCR on. "original" is always included.
+# Fewer variants = faster OCR per frame (less CPU work), at a small cost to
+# recognition robustness. Options: "original", "gray", "clahe".
+OCR_VARIANTS = ["original", "gray", "clahe"]
 OCR_HISTORY_SIZE = 7
 OCR_MIN_MATCHES = 3
 OCR_CONFIRMATION_RATIO = 0.6
@@ -447,6 +452,64 @@ class SupabaseClient:
         return False
 
 
+class SupabaseWorker:
+    """Runs Supabase network calls on a background thread.
+
+    The main frame loop enqueues work and never blocks on HTTP. This removes
+    the "sudden stutter" caused by synchronous requests.post() calls (which
+    have multi-second timeouts) happening in the middle of video processing.
+    """
+
+    def __init__(self, client, maxsize=64):
+        self.client = client
+        self.queue = queue.Queue(maxsize=maxsize)
+        self._stop = False
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self):
+        while not self._stop:
+            try:
+                task = self.queue.get(timeout=0.5)
+            except queue.Empty:
+                continue
+            try:
+                kind = task[0]
+                if kind == "flood_reading":
+                    self.client.push_flood_reading(task[1], force=task[2])
+                elif kind == "flood_alerts":
+                    self.client.push_flood_alerts(task[1], force=task[2])
+                elif kind == "detection":
+                    self.client.push_detection(*task[1:])
+            except Exception as exc:
+                print(f"[SupabaseWorker] Task error: {exc}")
+            finally:
+                self.queue.task_done()
+
+    def push_flood_reading(self, depth_cm, force=False):
+        try:
+            self.queue.put_nowait(("flood_reading", depth_cm, force))
+        except queue.Full:
+            pass  # Drop rather than block the frame loop.
+
+    def push_flood_alerts(self, depth_cm, force=False):
+        try:
+            self.queue.put_nowait(("flood_alerts", depth_cm, force))
+        except queue.Full:
+            pass
+
+    def push_detection(self, *args):
+        try:
+            self.queue.put_nowait(("detection",) + tuple(args))
+        except queue.Full:
+            pass
+
+    def stop(self):
+        self._stop = True
+        if self._thread:
+            self._thread.join(timeout=2.0)
+
+
 # -----------------------------------------------------------------------------
 # Input sources
 # -----------------------------------------------------------------------------
@@ -785,13 +848,15 @@ def make_plate_variants(plate):
             (width * OCR_UPSCALE, height * OCR_UPSCALE),
             interpolation=cv2.INTER_CUBIC,
         )
-    variants.append(("gray", cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)))
+    if "gray" in OCR_VARIANTS:
+        variants.append(("gray", cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)))
 
     # CLAHE avoids the contrast blow-out of global histogram equalization and
     # preserves thin character strokes better than aggressive denoising.
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    clahe_gray = clahe.apply(gray)
-    variants.append(("clahe", cv2.cvtColor(clahe_gray, cv2.COLOR_GRAY2BGR)))
+    if "clahe" in OCR_VARIANTS:
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        clahe_gray = clahe.apply(gray)
+        variants.append(("clahe", cv2.cvtColor(clahe_gray, cv2.COLOR_GRAY2BGR)))
     return variants
 
 
@@ -812,6 +877,58 @@ def recognize_best_variant(ocr_engine, plate_crop):
             best_confidence = confidence
             best_variant = name
     return best_text, best_confidence, best_variant
+
+
+class OcrWorker:
+    """Runs PaddleOCR on a background thread.
+
+    PaddleOCR runs on CPU in this environment (the installed paddle build has
+    no CUDA), so each recognition call can take hundreds of milliseconds.
+    Running it on a worker thread keeps the display loop responsive instead of
+    freezing on every OCR frame.
+    """
+
+    def __init__(self, ocr_engine, maxsize=8):
+        self.engine = ocr_engine
+        self.queue = queue.Queue(maxsize=maxsize)
+        self.results = {}
+        self._lock = threading.Lock()
+        self._stop = False
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self):
+        while not self._stop:
+            try:
+                job_id, crop = self.queue.get(timeout=0.5)
+            except queue.Empty:
+                continue
+            try:
+                text, confidence, variant = recognize_best_variant(self.engine, crop)
+                with self._lock:
+                    self.results[job_id] = (text, confidence, variant)
+            except Exception as exc:
+                print(f"[OcrWorker] Recognition error: {exc}")
+            finally:
+                self.queue.task_done()
+
+    def submit(self, job_id, crop):
+        """Enqueue a crop for OCR. Returns True if accepted, False if dropped."""
+        try:
+            self.queue.put_nowait((job_id, crop))
+            return True
+        except queue.Full:
+            return False
+
+    def poll(self, job_id):
+        """Return the result for job_id if ready, else None."""
+        with self._lock:
+            return self.results.pop(job_id, None)
+
+    def stop(self):
+        self._stop = True
+        if self._thread:
+            self._thread.join(timeout=2.0)
 
 
 def padded_crop(
@@ -909,6 +1026,11 @@ class TrackState:
     last_ocr_frame: int = -OCR_EVERY_N_FRAMES
     last_reported_plate: str = ""
     last_reported_matches: int = 0
+    # Async OCR bookkeeping: the job id of an in-flight OCR request and the
+    # crop/quality captured at submit time (used when the result arrives).
+    pending_ocr_job: int = -1
+    pending_crop: object = None
+    pending_quality: dict = field(default_factory=dict)
 
     def add_reading(self, text, confidence, variant=""):
         """Record one OCR observation and update consensus metadata.
@@ -1144,6 +1266,11 @@ def main():
     client = SupabaseClient(SUPABASE_URL, SUPABASE_KEY, enabled=use_supabase)
     client.fetch_registered_vehicles()
 
+    # Background workers keep network (Supabase) and CPU (PaddleOCR) work off
+    # the frame loop so the video never stutters on slow operations.
+    supabase_worker = SupabaseWorker(client)
+    ocr_worker = OcrWorker(ocr_engine)
+
     source_value = RTSP_URL if live else SIMULATION_SOURCE
     try:
         source = InputSource(live, source_value, SIMULATION_LOOP, SIMULATION_FPS)
@@ -1220,9 +1347,8 @@ def main():
             if not live and current_flood_status != previous_flood_status:
                 print(f"[Simulation] Flood status: {current_flood_status} at {depth_cm:.1f} cm")
                 previous_flood_status = current_flood_status
-            client.push_flood_reading(depth_cm)
-            client.push_flood_alerts(depth_cm)
-
+            supabase_worker.push_flood_reading(depth_cm)
+            supabase_worker.push_flood_alerts(depth_cm)
             try:
                 results = model.track(
                     frame,
@@ -1259,7 +1385,52 @@ def main():
                     state.last_seen_frame = frame_number
 
                     newly_confirmed = False
-                    if frame_number - state.last_ocr_frame >= OCR_EVERY_N_FRAMES:
+                    # Poll for a previously submitted async OCR result first.
+                    if state.pending_ocr_job >= 0:
+                        result = ocr_worker.poll(state.pending_ocr_job)
+                        if result is not None:
+                            state.pending_ocr_job = -1
+                            plate_text, ocr_confidence, selected_variant = result
+                            padded = state.pending_crop
+                            quality = state.pending_quality
+                            state.pending_crop = None
+                            state.pending_quality = {}
+                            accepted = (
+                                bool(plate_text)
+                                and ocr_confidence >= OCR_CONF_THRESHOLD
+                            )
+                            if accepted:
+                                metrics.accepted_ocr += 1
+                                metrics.ocr_confidences.append(ocr_confidence)
+                                newly_confirmed = state.add_reading(
+                                    plate_text, ocr_confidence, selected_variant
+                                )
+                                # Only log a provisional result when the winner
+                                # changes or its vote count changes meaningfully.
+                                if (
+                                    not state.confirmed_text
+                                    and (
+                                        state.provisional_text != state.last_reported_plate
+                                        or state.provisional_matches != state.last_reported_matches
+                                    )
+                                ):
+                                    state.last_reported_plate = state.provisional_text
+                                    state.last_reported_matches = state.provisional_matches
+                                    print(
+                                        f"[Simulation] Provisional OCR: {state.provisional_text} "
+                                        f"vote={state.provisional_matches}/{state.provisional_samples}"
+                                        if not live
+                                        else f"[OCR] Provisional: {state.provisional_text} "
+                                        f"vote={state.provisional_matches}/{state.provisional_samples}"
+                                    )
+                            else:
+                                metrics.rejected_ocr += 1
+
+                    # Submit a new OCR job when due and none is in flight.
+                    if (
+                        frame_number - state.last_ocr_frame >= OCR_EVERY_N_FRAMES
+                        and state.pending_ocr_job < 0
+                    ):
                         state.last_ocr_frame = frame_number
                         # Pad the YOLO crop before OCR so edge characters are
                         # less likely to be clipped.
@@ -1271,39 +1442,11 @@ def main():
                             metrics.rejected_ocr += 1
                             metrics.rejection_reasons[quality["reason"]] += 1
                             continue
-                        plate_text, ocr_confidence, selected_variant = recognize_best_variant(
-                            ocr_engine, padded
-                        )
-                        accepted = (
-                            bool(plate_text)
-                            and ocr_confidence >= OCR_CONF_THRESHOLD
-                        )
-                        if accepted:
-                            metrics.accepted_ocr += 1
-                            metrics.ocr_confidences.append(ocr_confidence)
-                            newly_confirmed = state.add_reading(
-                                plate_text, ocr_confidence, selected_variant
-                            )
-                            # Only log a provisional result when the winner
-                            # changes or its vote count changes meaningfully.
-                            if (
-                                not state.confirmed_text
-                                and (
-                                    state.provisional_text != state.last_reported_plate
-                                    or state.provisional_matches != state.last_reported_matches
-                                )
-                            ):
-                                state.last_reported_plate = state.provisional_text
-                                state.last_reported_matches = state.provisional_matches
-                                print(
-                                    f"[Simulation] Provisional OCR: {state.provisional_text} "
-                                    f"vote={state.provisional_matches}/{state.provisional_samples}"
-                                    if not live
-                                    else f"[OCR] Provisional: {state.provisional_text} "
-                                    f"vote={state.provisional_matches}/{state.provisional_samples}"
-                                )
-                        else:
-                            metrics.rejected_ocr += 1
+                        job_id = frame_number * 1000 + track_id
+                        if ocr_worker.submit(job_id, padded):
+                            state.pending_ocr_job = job_id
+                            state.pending_crop = padded
+                            state.pending_quality = quality
 
                     display_text = state.confirmed_text or state.provisional_text
                     confirmed = bool(state.confirmed_text)
@@ -1346,7 +1489,7 @@ def main():
                             f"ratio={state.confirmed_ratio:.2f} "
                             f"variant={state.confirmed_variant} track={track_id}"
                         )
-                        client.push_detection(
+                        supabase_worker.push_detection(
                             plate,
                             yolo_confidence,
                             state.confirmed_confidence,
@@ -1412,6 +1555,8 @@ def main():
     finally:
         source.close()
         sensor.close()
+        ocr_worker.stop()
+        supabase_worker.stop()
         cv2.destroyAllWindows()
         if not live:
             print(metrics.summary())
