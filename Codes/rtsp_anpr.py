@@ -37,7 +37,7 @@ from pathlib import Path
 # -----------------------------------------------------------------------------
 # CONFIGURATION
 # -----------------------------------------------------------------------------
-RUN_MODE = "SIMULATION"  # "LIVE" or "SIMULATION"
+RUN_MODE = "LIVE"  # "LIVE" or "SIMULATION"
 
 SIMULATION_SOURCE = "simulation/input.mp4"  # video, image, folder, or GENERATED
 SIMULATION_LOOP = True
@@ -107,6 +107,51 @@ VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".wmv", ".m4v"}
 
 
 # -----------------------------------------------------------------------------
+# CUDA DLL PATH setup (Windows)
+# -----------------------------------------------------------------------------
+# The paddlepaddle-gpu wheel pulls in CUDA runtime DLLs (cudnn, cublas, cudart,
+# etc.) as separate pip packages under site-packages/nvidia/. On Windows these
+# are NOT on the system PATH, so importing paddle fails with
+# "OSError: [WinError 127] ... cudnn_cnn64_9.dll or one of its dependencies".
+#
+# We use os.add_dll_directory() (NOT modifying PATH) so the directories are
+# added to the DLL search path for this process only. Modifying PATH globally
+# would make torch (which bundles its own, different cuDNN version) pick up
+# paddle's cuDNN DLLs and fail with a version conflict.
+def _setup_cuda_path():
+    try:
+        import site
+        import sysconfig
+        site_packages = None
+        for path in site.getsitepackages():
+            if path and "site-packages" in path:
+                site_packages = path
+                break
+        if site_packages is None:
+            site_packages = sysconfig.get_paths().get("purelib", "")
+        nvidia_dir = os.path.join(site_packages, "nvidia")
+        if not os.path.isdir(nvidia_dir):
+            return
+        added = 0
+        for sub in ("cudnn", "cublas", "cuda_runtime", "cufft", "curand",
+                    "cusolver", "cusparse", "nvjitlink"):
+            candidate = os.path.join(nvidia_dir, sub, "bin")
+            if os.path.isdir(candidate):
+                try:
+                    os.add_dll_directory(candidate)
+                    added += 1
+                except Exception:
+                    pass
+        if added:
+            print(f"[CUDA] Registered {added} nvidia DLL directories.")
+    except Exception as exc:
+        print(f"[CUDA] _setup_cuda_path error: {exc}")
+
+
+_setup_cuda_path()
+
+
+# -----------------------------------------------------------------------------
 # Optional imports
 # -----------------------------------------------------------------------------
 try:
@@ -128,11 +173,15 @@ try:
 except ImportError:
     HAS_SERIAL = False
 
+# Import paddle BEFORE ultralytics. ultralytics loads torch + its own CUDA
+# DLLs, which conflicts with paddle's cudnn DLL loading on Windows (OSError
+# WinError 127). paddle must be imported first so its CUDA DLL search path is
+# established before torch/ultralytics load their CUDA runtime.
 try:
-    from ultralytics import YOLO
-    HAS_YOLO = True
+    import paddle
+    HAS_PADDLE = True
 except ImportError:
-    HAS_YOLO = False
+    HAS_PADDLE = False
 
 try:
     from paddleocr import PaddleOCR
@@ -147,10 +196,10 @@ except ImportError:
     HAS_PADDLEOCR = False
 
 try:
-    import paddle
-    HAS_PADDLE = True
+    from ultralytics import YOLO
+    HAS_YOLO = True
 except ImportError:
-    HAS_PADDLE = False
+    HAS_YOLO = False
 
 try:
     import torch
