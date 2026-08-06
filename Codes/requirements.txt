@@ -1,6 +1,8 @@
 # RTSP ANPR + Flood Monitoring pipeline dependencies
 ultralytics
-easyocr
+lap>=0.5.12
+paddleocr
+paddlepaddle
 opencv-python
 torch
 numpy
